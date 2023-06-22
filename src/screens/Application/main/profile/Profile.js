@@ -232,3 +232,54 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 });
+// import * as React from "react";
+// import { StyleSheet, View } from "react-native";
+// import { Image } from "expo-image";
+
+// const EditProfile = () => {
+//   return (
+//     <View style={styles.editprofile}>
+//       <View style={styles.editprofileChild} />
+//       <View style={styles.editprofileItem} />
+//       <Image
+//         style={styles.editprofileInner}
+//         contentFit="cover"
+//         source={require("../assets/group-2.png")}
+//       />
+//     </View>
+//   );
+// };
+
+// const styles = StyleSheet.create({
+//   editprofileChild: {
+//     backgroundColor: "#00a743",
+//     height: 200,
+//     zIndex: 0,
+//     alignSelf: "stretch",
+//   },
+//   editprofileItem: {
+//     backgroundColor: "#fff",
+//     zIndex: 1,
+//     marginTop: -30,
+//     alignSelf: "stretch",
+//     flex: 1,
+//   },
+//   editprofileInner: {
+//     position: "absolute",
+//     top: 77,
+//     left: 95,
+//     width: 186,
+//     height: 186,
+//     zIndex: 2,
+//   },
+//   editprofile: {
+//     backgroundColor: "#f6f6f6",
+//     width: "100%",
+//     height: 844,
+//     overflow: "hidden",
+//     justifyContent: "flex-end",
+//     flex: 1,
+//   },
+// });
+
+// export default EditProfile;
