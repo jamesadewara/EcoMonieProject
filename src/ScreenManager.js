@@ -57,7 +57,8 @@ const ScreenManager = () => {
     return (
     <View style={{ flex: 1 }}>
         <NavigationContainer>
-            {!launch ? <LaunchStack /> : token ? <AppStack /> : <AuthStack />}
+            <AppStack />
+            {/* {!launch ? <LaunchStack /> : token ? <AppStack /> : <AuthStack />} */}
         </NavigationContainer>
         <Snackbar
           visible={!isConnected && snackbarVisible}

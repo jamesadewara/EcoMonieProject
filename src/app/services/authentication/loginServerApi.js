@@ -11,7 +11,7 @@ export const loginServerApi = createApi({
   endpoints: (builder) => ({
     login: builder.mutation({
       query: ({ email, password }) => ({
-        url: '/api/auth/jwt/create/',
+        url: '/auth/jwt/create/',
         method: 'POST',
         body: { email, password },
       }),

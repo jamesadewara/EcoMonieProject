@@ -13,7 +13,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import { useNavigation } from '@react-navigation/native';
 
 
-const MyCartPage = () => {
+const ApprovalPage = () => {
   const navigation = useNavigation();
 
   const [status, setStatus] = React.useState('checked');
@@ -21,7 +21,6 @@ const MyCartPage = () => {
   const onButtonToggle = value => {
     setStatus(status === 'checked' ? 'unchecked' : 'checked');
   };
-
 
   return (
     <SafeAreaProvider>
@@ -42,8 +41,13 @@ const MyCartPage = () => {
                   <List.Item
                     description="We manufacture tryes."
                     title="Company XYZ"
-                    left={() => <Avatar.Text size={24} label="XD" /> }
-                    right={() => <ToggleButton value="Received" status={status} onPress={onButtonToggle} />}
+                    left={() => <Avatar.Text size={45} label="XD" /> }
+                    right={() => <ToggleButton
+      icon="check"
+      value="Received"
+      status={status}
+      onPress={onButtonToggle}
+    />}
                   />
                 </TouchableRipple>
               </List.Section>
@@ -56,4 +60,4 @@ const MyCartPage = () => {
   );
 };
 
-export default MyCartPage;
+export default ApprovalPage;

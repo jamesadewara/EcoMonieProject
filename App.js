@@ -4,8 +4,7 @@ import store from './src/app/store';
 import { MD3LightTheme as DefaultTheme, PaperProvider } from 'react-native-paper';
 
 import ScreenManager from "./src/ScreenManager";
-// import Albums from './src/Albums';
-// import NewAlbumForm from './src/NewAlbumForm';
+
 
 
 
@@ -22,7 +21,6 @@ export default function App() {
   return (
     <StoreProvider store={store}>
       <PaperProvider theme={theme}>
-        {/* <Albums /> */}
         <ScreenManager />
       </PaperProvider>
     </StoreProvider>

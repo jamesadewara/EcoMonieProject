@@ -3,21 +3,21 @@ import { BottomNavigation, MD2Colors, Text } from 'react-native-paper';
 import ArticlePage from './main/Article';
 import ProductPage from './main/Product';
 import SettingsPage from './main/Settings';
-import MyCartPage from './main/MyCart';
+import ApprovalPage from './main/Approval';
 
 const MainScreen = () => {
   const [index, setIndex] = React.useState(0);
   const [routes] = React.useState([
     { key: 'explore', title: 'Explore', focusedIcon: 'compass', unfocusedIcon: 'compass-outline' },
     { key: 'product', title: 'Store', focusedIcon: 'store', unfocusedIcon: 'store-outline' },
-    { key: 'cart', title: 'Shop Cart', focusedIcon: 'cart', unfocusedIcon: 'cart-outline' },
+    { key: 'approval', title: 'Approval', focusedIcon: 'cart', unfocusedIcon: 'cart-outline' },
     { key: 'settings', title: 'Settings', focusedIcon: 'cog', unfocusedIcon: 'cog-outline' },
   ]);
 
   const renderScene = BottomNavigation.SceneMap({
     explore: ArticlePage,
     product: ProductPage,
-    cart: MyCartPage,
+    approval: ApprovalPage,
     settings: SettingsPage,
   });
 

@@ -11,7 +11,7 @@ export const signupServerApi = createApi({
   endpoints: (builder) => ({
     signup: builder.mutation({
       query: ({ email, password }) => ({
-        url: '/api/auth/users/',
+        url: '/auth/users/',
         method: 'POST',
         body: { email, password },
       }),
@@ -21,7 +21,7 @@ export const signupServerApi = createApi({
 
     updateUser: builder.mutation({
       query: ({ accessToken, username, about, contact_no, location, address }) => ({
-        url: '/api/account/update/',
+        url: '/account/update/',
         headers: {
           Authorization: `Bearer ${accessToken}`, // Replace `accessToken` with the actual user's authentication token
           'Content-Type': 'application/json',
@@ -34,7 +34,7 @@ export const signupServerApi = createApi({
 
     getUser: builder.mutation({
       query: ({ accessToken }) => ({
-        url: '/api/account/info/',
+        url: '/account/info/',
         headers: {
           Authorization: `Bearer ${accessToken}`, // Replace `accessToken` with the actual user's authentication token
           'Content-Type': 'application/json',

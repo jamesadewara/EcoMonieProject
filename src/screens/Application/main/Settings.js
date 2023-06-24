@@ -253,6 +253,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderRadius: 20,
     margin: 15,
+    paddingBottom: 7,
   },
   sectionHeader: {
     fontWeight: 'bold',
