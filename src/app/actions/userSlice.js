@@ -4,7 +4,7 @@ const userSlice = createSlice({
   name: 'user',
   initialState: {
     token: null,
-    userInfo: null,
+    userInfo: {},
   },
   reducers: {
     setToken: (state, action) => {
@@ -17,7 +17,7 @@ const userSlice = createSlice({
     },
     
     clearUser: (state) => {
-      state.userInfo = null;
+      state.userInfo = {};
       state.token = null;
     },
   },

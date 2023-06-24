@@ -4,11 +4,12 @@ import { WebView } from 'react-native-webview';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Styles } from '../../../css/design';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Button, MD2Colors } from "react-native-paper";
+import { Button, MD2Colors, Appbar } from "react-native-paper";
 import { BASE_URL } from "../../../config"
 
 const Thumbnail = {
   noNetwork: require('../../../../assets/img/anime/noInternet.gif'),
+  icon: require('../../../../assets/icon.png')
 };
 
 const ArticlePage = () => {
@@ -87,16 +88,18 @@ const ArticlePage = () => {
 
   return (
     <SafeAreaProvider>
-      <SafeAreaView style={styles.container}>
-        <ScrollView
+      <Appbar.Header>
+        <Appbar.Action icon={Thumbnail.icon} size={48} iconColor='green' />
+        <Appbar.Content title="EcoMonie" color='green' style={{fontWeight: 'bolder'}} />
+      </Appbar.Header>
+      <ScrollView
           contentContainerStyle={styles.scrollViewContent}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
           }
         >
           {renderWebView()}
-        </ScrollView>
-      </SafeAreaView>
+    </ScrollView>
     </SafeAreaProvider>
   );
 };

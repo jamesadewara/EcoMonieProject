@@ -68,14 +68,16 @@ function clearCache(){
           label: 'Edit your profile',
           description: '',
           color: MD2Colors.green900,
-          navigate: "profile"
+          navigate: "edit_profile",
+          data_route: {'email': 'jamesadewara1@gmail.com'}
         },
         {
           id: 'change_password',
           icon: 'key',
           label: 'change your password',
           color: 'silver',
-          action: showLogoutDialog,
+          navigate: "change_password",
+          data_route: {'email': 'jamesadewara1@gmail.com'}
         },
         {
           id: 'cache',
@@ -94,7 +96,7 @@ function clearCache(){
       ],
     },
     {
-      header: 'General',
+      header: 'Services',
       items: [
         {
           id: 'Notifications',
@@ -102,7 +104,7 @@ function clearCache(){
           label: 'Notifications',
           description: '',
           color: 'midnightblue',
-          action: showLogoutDialog,
+          navigate: "notification",
         },
         {
           id: 'updates',
@@ -123,7 +125,7 @@ function clearCache(){
       ],
     },
     {
-      header: 'App',
+      header: 'General',
       items: [
         {
           id: 'rates',
@@ -156,19 +158,37 @@ function clearCache(){
           color: 'gray',
           action: showAboutDialog,
         },
+        {
+          id: 'terms',
+          icon: 'file-document',
+          label: 'Terms & Conditions',
+          description: '',
+          color: MD2Colors.teal300,
+          navigate: "terms",
+          data_route: { page: "Terms & Conditions", link: 'https://www.google.com/'},
+        },
+        {
+          id: 'help',
+          icon: 'lifebuoy',
+          label: 'Help & Support',
+          description: '',
+          color: MD2Colors.green300,
+          navigate: "terms",
+          data_route: { page: "Help & Support", link: 'https://www.google.com/'},
+        },
       ],
     },
   ];
 
-
+  
   
   return (
     <SafeAreaProvider>
+      <Appbar.Header>
+        <Appbar.Content title="Settings" />
+      </Appbar.Header>
       {/* <CustomAlert visible={settings.isLoading} message="Loading..." /> */}
       <SafeAreaView style={styles.safeAreaContainer}>
-        <Appbar.Header>
-          <Appbar.Content title="Settings" />
-        </Appbar.Header>
         <Portal>
           <Dialog visible={logoutDialog} onDismiss={hideLogoutDialog}>
             <Dialog.Title>Logout</Dialog.Title>
@@ -219,10 +239,10 @@ function clearCache(){
                     <List.Subheader style={styles.sectionHeader}>
                       {header}
                     </List.Subheader>
-                    {items.map(({ id, label, icon, color, action, navigate, description, url }) => (
+                    {items.map(({ id, label, icon, color, action, navigate, description, url, data_route }) => (
                       <TouchableRipple
                         key={id}
-                        onPress={() => (navigate ? navigation.navigate(navigate) : url ? Linking.openURL(url) : action())}
+                        onPress={() => (navigate ? navigation.navigate(navigate, data_route) : url ? Linking.openURL(url) : action())}
                         rippleColor="rgba(0, 0, 0, .32)">
                         <List.Item
                           style={styles.listItem}

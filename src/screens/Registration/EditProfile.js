@@ -1,16 +1,14 @@
-import React, { useState } from 'react';
-import { View, ImageBackground, ScrollView, Alert, KeyboardAvoidingView } from 'react-native';
-import { Text, Button, TextInput, HelperText, IconButton, Avatar, MD2Colors } from 'react-native-paper';
-import { LinearGradient } from 'expo-linear-gradient';
+import React, { useState, useEffect } from 'react';
+import { View, ScrollView, Alert, KeyboardAvoidingView } from 'react-native';
+import { Text, Button, TextInput, IconButton, MD2Colors } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { useUpdateUserMutation } from '../../app/services/authentication/registerServerApi';
-import { setUser } from '../../app/actions/userSlice';
-import { useDispatch } from 'react-redux';
+import { setUser, selectCurrentUser, selectCurrentToken } from '../../app/actions/userSlice';
+import { useDispatch, useSelector } from 'react-redux';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import CustomAlert from '../../widgets/customAlert';
-import { Styles } from '../../css/design';
-import { useToken } from '../../config';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import CustomAvatar from '../../widgets/customAvatar';
 
 const Thumbnail = {
   icon: require('../../../assets/icon.png'),
@@ -20,7 +18,8 @@ const Thumbnail = {
 export default function EditProfilePage({ route }) {
   const dispatch = useDispatch();
   const navigation = useNavigation();
-  const accessToken = useToken();
+  const accessToken = useSelector(selectCurrentToken);
+
   const [email, setEmail] = useState(route.params?.email);
   const [username, setUsername] = useState('');
   const [businessType, setBusinessType] = useState('Seller');
@@ -29,12 +28,18 @@ export default function EditProfilePage({ route }) {
   const [location, setLocation] = useState('');
   const [address, setAddress] = useState('');
   const [avatar, setAvatar] = useState(null); // Assuming the avatar is stored as an image URI
-
+  const [bankAccountNo, setBankAccountNo] = useState('');
+  const [formSubmitted, setFormSubmitted] = useState(false);
   const [updateUser, { isLoading, isError, error }] = useUpdateUserMutation();
-  console.log('ARE  SURE', accessToken)
+  const [isDispatched, setIsDispatched] = useState(false);
+  const [loginUserInfo, setLoginUserInfo] = useState(null); // Add 'response' state to store the response from updateUser
+
   const handleUpdateUser = async () => {
-    // Check if the username field is empty
-    if (username.trim() === '') {
+    setFormSubmitted(true);
+    setIsDispatched(false);
+
+    // Check if the username field is empty or null
+    if (!username || username.trim() === '') {
       Alert.alert('Username is required', 'Please enter a username.');
       return;
     }
@@ -42,6 +47,8 @@ export default function EditProfilePage({ route }) {
     try {
       let contact_no = contactNo;
       let type_of_business = businessType;
+      let bank_account_no = bankAccountNo;
+
       const updatePayload = {
         accessToken,
         email,
@@ -50,17 +57,13 @@ export default function EditProfilePage({ route }) {
         contact_no,
         location,
         address,
-        avatar,
+        bank_account_no,
       };
-      console.log('opow Adewa')
 
-      console.log('ACCESS TOKEN', updatePayload)
       const response = await updateUser(updatePayload).unwrap();
-      console.log(response, accessToken);
-
-      //add the userinfo
-      dispatch(setUser(response))
+      setLoginUserInfo(response); // Store the response
       Alert.alert('Update Successful', 'User details have been updated successfully!');
+      setIsDispatched(true);
     } catch (error) {
       console.log(error)
       // Handle error
@@ -68,40 +71,53 @@ export default function EditProfilePage({ route }) {
     }
   };
 
+  useEffect(() => {
+    if (isDispatched) {
+      console.log(loginUserInfo, 'information')
+      dispatch(setUser(loginUserInfo));
+      setIsDispatched(false);
+    }
+  }, [isDispatched]);
+
   const handleAvatarSelection = () => {
     // Implement avatar selection logic here
   };
 
   return (
     <SafeAreaProvider>
-      <SafeAreaView style={{backgroundColor: MD2Colors.green700}}>
+      <SafeAreaView style={{ backgroundColor: MD2Colors.green700 }}>
         <CustomAlert visible={isLoading} message="Loading..." />
         <ScrollView>
           <View style={{ flex: 1 }}>
             <View>
-              <IconButton  icon={() => <Icon name="arrow-left" size={24} color="white" />} style={{ paddingTop: 20 }} color="white" size={35} onPress={() => navigation.navigate('entrance')} />
+              <IconButton
+                icon={() => <Icon name="arrow-left" size={24} color="white" />}
+                style={{ paddingTop: 20 }}
+                color="white"
+                size={35}
+                onPress={() => navigation.navigate('entrance')}
+              />
             </View>
 
             <View
               style={{
                 alignItems: 'center',
                 backgroundColor: 'white',
-                borderTopRadius: 130,
+                borderTopLeftRadius: 130,
+                borderTopRightRadius: 130,
                 paddingTop: 100,
                 paddingBottom: 45,
               }}
             >
-                {/* Avatar */} 
-                <View style={{ flexDirection: 'row', alignItems: 'center', alignSelf: 'center' }}>
-                  {avatar === null ? (
-                    <Avatar.Text label={email.charAt(0).toUpperCase()} size={150} />
-                  ) : (
-                    <Avatar.Image source={avatar} size={150} />
-                  )}
-                </View>
-          
+              {/* Avatar */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', alignSelf: 'center' }}>
+                <CustomAvatar avatar={avatar} email={email} />
+              </View>
+
               <Text style={{ fontSize: 40, color: 'green', fontWeight: 'bold' }}>Edit Your Profile</Text>
-              <Text style={{ fontSize: 19, color: 'green', fontWeight: 'bold', marginBottom: 20 }}>Update your profile information</Text>
+              <Text style={{ fontSize: 19, color: 'green', fontWeight: 'bold', marginBottom: 20 }}>
+                Update your profile information
+              </Text>
 
               <View style={{ marginVertical: 30 }}>
                 {/* Email */}
@@ -129,6 +145,9 @@ export default function EditProfilePage({ route }) {
                     value={username}
                     onChangeText={setUsername}
                   />
+                  {formSubmitted && !username && (
+                    <Text style={{ color: 'red' }}>Username is required</Text>
+                  )}
                 </KeyboardAvoidingView>
 
                 {/* Business Type */}
@@ -169,7 +188,7 @@ export default function EditProfilePage({ route }) {
                     placeholder="Contact No"
                     value={contactNo}
                     onChangeText={setContactNo}
-                    keyboardType='phone-pad'
+                    keyboardType="phone-pad"
                   />
                 </KeyboardAvoidingView>
 
@@ -183,7 +202,7 @@ export default function EditProfilePage({ route }) {
                     placeholder="Location"
                     value={location}
                     onChangeText={setLocation}
-                    keyboardType='default'
+                    keyboardType="default"
                   />
                 </KeyboardAvoidingView>
 
@@ -200,6 +219,19 @@ export default function EditProfilePage({ route }) {
                   />
                 </KeyboardAvoidingView>
 
+                {/* Bank Account No */}
+                <KeyboardAvoidingView style={{ width: 260, margin: 20 }}>
+                  <TextInput
+                    label="Bank Account No"
+                    mode="outlined"
+                    outlineColor="green"
+                    activeColor="green"
+                    placeholder="Bank Account No"
+                    value={bankAccountNo}
+                    onChangeText={setBankAccountNo}
+                    keyboardType="numeric"
+                  />
+                </KeyboardAvoidingView>
               </View>
 
               <Button mode="contained" style={{ width: 260, backgroundColor: 'green' }} onPress={handleUpdateUser}>

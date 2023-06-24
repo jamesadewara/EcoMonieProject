@@ -20,28 +20,28 @@ export const signupServerApi = createApi({
     }),
 
     updateUser: builder.mutation({
-      query: ({ accessToken, username, about, contact_no, location, address }) => ({
-        url: '/account/update/',
+      query: ({ accessToken, username, about, contact_no, location, address, bank_account_no}) => ({
+        url: '/auth/account/update/',
         headers: {
           Authorization: `Bearer ${accessToken}`, // Replace `accessToken` with the actual user's authentication token
           'Content-Type': 'application/json',
         },
-        method: 'PUT',
-        body: { username, about,  contact_no, location, address },
+        method: 'POST',
+        body: { username, about,  contact_no, location, address, bank_account_no },
       }),
       invalidatesTags: ['Register'],
     }),
 
     getUser: builder.mutation({
       query: ({ accessToken }) => ({
-        url: '/account/info/',
+        url: '/auth/account/info/',
         headers: {
           Authorization: `Bearer ${accessToken}`, // Replace `accessToken` with the actual user's authentication token
           'Content-Type': 'application/json',
         },
         method: 'GET',
       }),
-      invalidatesTags: ['Register'],
+      providesTags: ['Register'],
     }),
 
 

@@ -1,6 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, useWindowDimensions, StyleSheet, Image, ActivityIndicator, Alert } from 'react-native';
-import { Button, Text } from 'react-native-paper';
+import { Text } from 'react-native-paper';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
@@ -20,23 +20,24 @@ export default function AutoLoginPage({ route }) {
 
   const [login] = useLoginMutation();
   const { width, height } = useWindowDimensions();
-  const {loginToken, setLoginToken} = useState(null);
+  const [loginToken, setLoginToken] = useState(null);
   const [isLoading, setIsLoading] = useState(false); // Set initial value to true
+  const [isDispatched, setIsDispatched] = useState(false);
 
   const autoLogin = async () => {
-    setIsLoading(true)
+    setIsLoading(true);
+    setIsDispatched(false);
     try {
       const email = route.params?.email;
       const password = route.params?.password;
       const loginPayload = { email, password };
 
       const response = await login(loginPayload).unwrap();
-    
-      setLoginToken(response.access)
-      dispatch(setToken(loginToken));
-      navigation.replace('editprofile', { email: email });
+
+      setLoginToken(response.access);
 
       Alert.alert('Login Successful', 'Welcome aboard this journey!');
+      setIsDispatched(true);
     } catch (error) {
       if (error.request) {
         Alert.alert('Network Error', 'Please check your internet connection.');
@@ -48,27 +49,33 @@ export default function AutoLoginPage({ route }) {
         );
       }
     }
-    
-    setIsLoading(false)
   };
 
-  console.log(isLoading, 'loader');
+  useEffect(() => {
+    autoLogin();
+  }, []);
+  
+  useEffect(() => {
+    if (isDispatched && loginToken) {
+      dispatch(setToken(loginToken));
+      navigation.replace('editprofile', { email: route.params?.email });
+      setIsDispatched(false);
+    }
+  }, [isDispatched, loginToken]);
+
 
   return (
     <SafeAreaProvider>
       <SafeAreaView style={{ flex: 1, backgroundColor: 'green' }}>
         <LinearGradient colors={['rgba(0, 0, 0, 0.7)', 'rgba(0, 0, 0, 0.9)']} style={Styles.defaultGradient} />
         <View style={[styles.container, { width, height }]}>
+          <Text variant="headlineLarge" style={{ color: 'white', top: 50 }}>
+            Setting up your page
+          </Text>
           <Image source={Thumbnail.calmness} style={styles.image} />
           <View style={styles.textContainer}>
-            <Text style={styles.text}>Please remain calm as we log you in, setting you environment</Text>
-            {isLoading ? ( // Use a conditional expression to conditionally render the ActivityIndicator
-              <ActivityIndicator size="large" color="green" />
-            ) : (
-              <Button onPress={() => autoLogin()} mode="contained" style={styles.button}>
-                Continue
-              </Button>
-            )}
+            <Text style={styles.text}>Please remain calm while we set things up</Text>
+            <ActivityIndicator size="large" color="green" />
           </View>
         </View>
       </SafeAreaView>
@@ -97,8 +104,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: 'white',
     marginBottom: 10,
-  },
-  button: {
-    marginTop: 20,
   },
 });

@@ -19,7 +19,7 @@ import { authValid } from '../../../app/actions/launchSlice';
 // Get All Images for the Screen
 const Thumbnail = {
   icon: require('../../../../assets/icon.png'),
-  intro_wallpaper: require('../../../../assets/img/wallpaper/wallpaper1.jpeg'),
+  intro_wallpaper: require('../../../../assets/img/wallpaper/wallpaper-0.gif'),
 };
 
 

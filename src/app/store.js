@@ -5,7 +5,6 @@ import { loginServerApi } from './services/authentication/loginServerApi';
 import { signupServerApi } from './services/authentication/registerServerApi';
 import userReducer from './actions/userSlice';
 import launchReducer from "./actions/launchSlice";
-import { articleServerApi } from './services/features/articleServerApi';
 import { productServerApi } from './services/features/productServerApi';
 import { settingsServerApi } from './services/features/settingsServerApi';
 
@@ -14,7 +13,6 @@ const store = configureStore({
   reducer: {
     launch: launchReducer,
     user: userReducer,
-    [articleServerApi.reducerPath]: articleServerApi.reducer,
     [productServerApi.reducerPath]: productServerApi.reducer,
     [settingsServerApi.reducerPath]: settingsServerApi.reducer,
     [loginServerApi.reducerPath]: loginServerApi.reducer,
@@ -24,7 +22,6 @@ const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware()
       .concat(jsonServerApi.middleware)
-      .concat(articleServerApi.middleware)
       .concat(productServerApi.middleware)
       .concat(settingsServerApi.middleware)
       .concat(loginServerApi.middleware)

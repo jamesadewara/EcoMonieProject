@@ -21,10 +21,9 @@ import { selectCurrentUser, selectCurrentToken } from "./app/actions/userSlice"
 
 
 const ScreenManager = () => {
-    // const launch = useSelector((state) => state.launcher.intro)
+    const launch = useSelector((state) => state.launch.intro);
     const [isConnected, setIsConnected] = useState(true);
     const [snackbarVisible, setSnackbarVisible] = useState(false);
-    const launch = isLaunched();
     const token = useSelector(selectCurrentToken) && useSelector(selectCurrentUser);
     console.log(useSelector(selectCurrentUser), 'user info', useSelector(selectCurrentToken), 'token info')
   
@@ -57,8 +56,7 @@ const ScreenManager = () => {
     return (
     <View style={{ flex: 1 }}>
         <NavigationContainer>
-            <AppStack />
-            {/* {!launch ? <LaunchStack /> : token ? <AppStack /> : <AuthStack />} */}
+            {!launch ? <LaunchStack /> : token ? <AppStack /> : <AuthStack />}
         </NavigationContainer>
         <Snackbar
           visible={!isConnected && snackbarVisible}
