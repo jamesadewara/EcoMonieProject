@@ -17,15 +17,15 @@ import { isLaunched } from "./config";
 import { useSelector } from "react-redux"
 
 import * as Font from 'expo-font';
-import { selectCurrentUser, selectCurrentToken } from "./app/actions/userSlice"
 
+import { selectCurrentToken, selectCurrentUser } from "./app/actions/authSlice";
 
 const ScreenManager = () => {
     const launch = useSelector((state) => state.launch.intro);
     const [isConnected, setIsConnected] = useState(true);
     const [snackbarVisible, setSnackbarVisible] = useState(false);
-    const token = useSelector(selectCurrentToken) && useSelector(selectCurrentUser);
-    console.log(useSelector(selectCurrentUser), 'user info', useSelector(selectCurrentToken), 'token info')
+    const token = useSelector(selectCurrentToken) && useSelector(selectCurrentUser) //&& userinfo as well
+    console.log('user info', useSelector(selectCurrentToken), 'token info')
   
     useEffect(() => {
       const loadFonts = async () => {

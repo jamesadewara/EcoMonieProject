@@ -16,7 +16,7 @@ const Thumbnail = {
 
 export default function AutoLoginPage({ route }) {
   const navigation = useNavigation();
-  const dispatch = useDispatch();
+  const dispatch = useDispatch;
 
   const [login] = useLoginMutation();
   const { width, height } = useWindowDimensions();

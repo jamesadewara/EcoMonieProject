@@ -6,11 +6,11 @@ import LoginPage from "../screens/Registration/Login";
 
 import RegisterPage from "../screens/Registration/Register";
 
-import AutoLoginPage from "../screens/Registration/autoLogin";
+//import AutoLoginPage from "../screens/Registration/autoLogin";
 
-import EditProfilePage from "../screens/Registration/EditProfile";
+//import EditProfilePage from "../screens/Registration/EditProfile";
 
-import AutoUpdateUserPage from "../screens/Registration/autoUpdateUser";
+//import AutoUpdateUserPage from "../screens/Registration/autoUpdateUser";
 
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
@@ -29,11 +29,11 @@ const AuthStack = () => {
 
             <Stack.Screen name="register" component={RegisterPage} options={{ headerShown: false }}/> 
 
-            <Stack.Screen name="autologin" component={AutoLoginPage} options={{ headerShown: false }}/> 
+            {/* <Stack.Screen name="autologin" component={AutoLoginPage} options={{ headerShown: false }}/>  */}
 
-            <Stack.Screen name="editprofile" component={EditProfilePage} options={{ headerShown: false }}/> 
+            {/* <Stack.Screen name="editprofile" component={EditProfilePage} options={{ headerShown: false }}/> 
 
-            <Stack.Screen name="autoupdate" component={AutoUpdateUserPage} options={{ headerShown: false }}/> 
+            <Stack.Screen name="autoupdate" component={AutoUpdateUserPage} options={{ headerShown: false }}/>  */}
 
             
 

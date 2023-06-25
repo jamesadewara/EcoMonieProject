@@ -3,8 +3,15 @@ import { View, ImageBackground, ScrollView, Alert, KeyboardAvoidingView } from '
 import { Text, Button, TextInput, HelperText, IconButton, MD2Colors } from 'react-native-paper';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
-import { useSignupMutation } from '../../app/services/authentication/registerServerApi';
+
 import Icon from 'react-native-vector-icons/FontAwesome';
+
+import { useDispatch } from 'react-redux';
+
+import { userApiSlice, useSignupMutation } from '../../app/services/user/userApiSlice';
+
+import { setCredentials } from '../../app/actions/authSlice';
+import { useLoginMutation } from '../../app/services/authentication/authApiSlice';
 
 import CustomAlert from '../../widgets/customAlert';
 import { Styles } from '../../css/design';
@@ -15,12 +22,14 @@ const Thumbnail = {
 };
 
 export default function SignupPage() {
-  const navigation = useNavigation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [formSubmitted, setFormSubmitted] = useState(false);
+  const navigation = useNavigation();
 
-  const [signup, { isLoading, isError, error }] = useSignupMutation();
+  const [login, { isLoading }] = useLoginMutation();
+  const [signup, { isLoading: signisLoading, isError, error }] = useSignupMutation();
+  const dispatch = useDispatch();
 
   const hasErrors = (value) => {
     return !value.includes('@');
@@ -42,21 +51,25 @@ export default function SignupPage() {
       try {
         const signupPayload = { email, password };
         const response = await signup(signupPayload).unwrap();
-        console.log(response);
+        console.log(response, 'oio');
+
+        const userData = await login({ email, password }).unwrap();
+        dispatch(setCredentials({ ...userData, email }));
 
         // Navigate to the edit profile screen screen upon successful signup
-        navigation.navigate('autologin', { email: email, password: password });
-        // Alert.alert('Signup Successful', 'You have successfully signed up! Welcome aboard!. please wait while we log you in, Thank you!');
+        //navigation.navigate('autologin', { email: email, password: password });
+        Alert.alert('Signup Successful', 'You have successfully signed up! Welcome aboard! Please wait while we log you in. Thank you!');
 
-        
+        //setLoginToken(response.access);
+        //
       } catch (error) {
         if (error.response) {
           Alert.alert('Signup Failed', 'An error occurred during signup.');
         } else if (error.request) {
           Alert.alert('Network Error', 'Please check your internet connection.');
         } else {
-          console.log("stars", error.data)
-          try{
+          console.log('stars', error.data);
+          try {
             if (error.response.status == 400) {
               try {
                 const message = error.response.data.password[0] || 'A user with this account already exists, please try another email.';
@@ -68,8 +81,7 @@ export default function SignupPage() {
             } else {
               Alert.alert('Error', 'An error occurred during signup.');
             }
-          }
-          catch{
+          } catch {
             if (error.status == 400) {
               try {
                 const message = error.data.password[0] || 'A user with this account already exists, please try another email.';
@@ -92,7 +104,7 @@ export default function SignupPage() {
   return (
     <ImageBackground style={[Styles.mh100]} source={Thumbnail.intro_wallpaper}>
       <LinearGradient colors={['rgba(0, 0, 0, 0.7)', 'rgba(0, 0, 0, 0.5)']} style={[Styles.defaultGradient, { opacity: 0.45 }]} />
-      <CustomAlert visible={isLoading} message="Loading..." />
+      <CustomAlert visible={isLoading || signisLoading} message="Loading..." />
       <ScrollView>
         <View style={{ flex: 1 }}>
           <View>

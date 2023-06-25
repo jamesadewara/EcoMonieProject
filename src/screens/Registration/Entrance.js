@@ -13,6 +13,8 @@ import { useNavigation } from '@react-navigation/native';
 
 import { Styles } from '../../css/design';
 
+import { useSelector } from "react-redux"
+import { selectCurrentToken, selectCurrentUser } from "../../app/actions/authSlice"
 
 const Thumbnail = {
   intro_wallpaper: require('../../../assets/img/wallpaper/entrance.jpeg'),
@@ -21,6 +23,8 @@ const Thumbnail = {
 export default function IntroPage() {
 
   const navigation = useNavigation();
+  const token = useSelector(selectCurrentToken)
+  const user = useSelector(selectCurrentUser)
 
   return (
     <ImageBackground style={[Styles.mh100]} source={Thumbnail.intro_wallpaper}>
@@ -31,7 +35,7 @@ export default function IntroPage() {
       <View style={Styles.container}>
         <View style={{ flex: 3, padding: 15, }}>
           <Text variant='displaySmall' style={{color: "white", textAlign: "center", top: "45%" }}>
-            Earn, Impact and be Aware
+            Earn, Impact and be Aware{token}l{user}
           </Text>
         </View>
 

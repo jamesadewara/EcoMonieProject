@@ -5,7 +5,7 @@ import { View, Animated } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch } from 'react-redux';
 import { authValid } from '../../../app/actions/launchSlice';
-import { selectCurrentUser, selectCurrentToken } from "../../../app/actions/userSlice"
+import { selectCurrentToken } from '../../../app/actions/authSlice';
 
 // Get All Images for the Screen
 const Thumbnail = {
@@ -17,7 +17,7 @@ const BGColor = MD2Colors.green100;
 const SplashPage = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const showedIntro = useSelector(selectCurrentToken) && useSelector(selectCurrentUser);
+  const showedIntro = useSelector(selectCurrentToken) && useSelector(selectCurrentUser) 
 
   useEffect(() => {
     const interval = setInterval(() => {

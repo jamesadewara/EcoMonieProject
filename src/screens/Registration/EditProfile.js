@@ -16,7 +16,7 @@ const Thumbnail = {
 };
 
 export default function EditProfilePage({ route }) {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch;
   const navigation = useNavigation();
   const accessToken = useSelector(selectCurrentToken);
 
