@@ -23,12 +23,6 @@ const ChangePasswordPage = ({route}) => {
     const navigation = useNavigation();
     const email = route.params?.email;
 
-  const accessToken = useSelector((state) => state.user.token);
-  const {
-    data: settings = [],
-    isLoading,
-    isFetching,
-  } = useGetSettingsQuery({ accessToken });
 
   const [password, setPassword] = useState('');
   const [formSubmitted, setFormSubmitted] = useState(false);

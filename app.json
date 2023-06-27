@@ -6,19 +6,43 @@
     "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    
     "assetBundlePatterns": [
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "permissions": {
+        "allowSystemDND": true,
+        "allowBluetooth": true,
+        "allowCamera": true,
+        "allowMicrophone": true,
+        "allowLocation": true,
+        "allowMotion": true,
+        "allowNotifications": true,
+        "allowBackgroundRefresh": true,
+        "allowMusic": true,
+        "allowPhotos": true
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "green"
+        "backgroundColor": "#fafafa"
       },
-      "package": "com.aiguy.EcoMonie"
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ],
+      "statusBar": {
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.aiguy.EcoMonie",
+      "config": {
+        "engine": {
+          "enableHermes": true
+        }
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"

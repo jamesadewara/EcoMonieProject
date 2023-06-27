@@ -1,66 +1,81 @@
-import React, { useRef, useEffect, useState } from 'react';
-import { View, ImageBackground, ScrollView, Alert, KeyboardAvoidingView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, ImageBackground, ScrollView, Alert, KeyboardAvoidingView, Snackbar } from 'react-native';
 import { Text, Button, TextInput, HelperText, IconButton } from 'react-native-paper';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch } from 'react-redux';
-import { setCredentials } from '../../app/actions/authSlice';
-import { useLoginMutation } from '../../app/services/authentication/authApiSlice';
-import { Styles } from '../../css/design';
-import CustomAlert from '../../widgets/customAlert';
+import { setCredentials } from '../../../app/actions/authSlice';
+import { useLoginMutation } from '../../../app/services/authentication/authApiSlice';
+import { Styles } from '../../../css/design';
+import CustomAlert from '../../../widgets/customAlert';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import NetInfo from '@react-native-community/netinfo';
 
 const Thumbnail = {
-  icon: require('../../../assets/icon.png'),
-  intro_wallpaper: require('../../../assets/img/wallpaper/entrance.jpeg'),
+  intro_wallpaper: require('../../../../assets/img/wallpaper/entrance.jpeg'),
 };
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [formSubmitted, setFormSubmitted] = useState(false);
-  const [hasExecuted, setHasExecuted] = useState(false);
-  const [credent, setCredent] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isInternetConnected, setIsInternetConnected] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
   const navigation = useNavigation();
-
-  const [login, { isLoading }] = useLoginMutation();
   const dispatch = useDispatch();
 
-  const hasErrors = (value) => {
-    return !value.includes('@');
+  const [login] = useLoginMutation();
+
+
+  const validateEmail = (value) => {
+    // Email validation logic
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
   };
 
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener((state) => {
+      setIsInternetConnected(state.isConnected);
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
   const logUser = async () => {
+    setIsLoading(true);
     try {
-      const userData = await login({ email, password }).unwrap();
-      setEmail('');
-      setPassword('');
-      Alert.alert('Login Successful', 'You have successfully logged in! Please click on continue as we reset your page. Thank you!');
-        dispatch(setCredentials({ ...userData, email }));
+      const userData = await login({ email, password });
       
+      dispatch(setCredentials({ ...userData, email }));
+      Alert.alert('Login Successful', 'You have successfully logged in! Please click on continue as we reset your page. Thank you!');
     } catch (error) {
       if (error.status === 'FETCH_ERROR') {
         Alert.alert('Network Error', 'Please check your internet connection.');
       } else if (error.status === 401) {
         Alert.alert('Login Failed', 'User does not exist, try another email and password.');
       }
-      console.log(error);
-      setHasExecuted(false);
-    }
-  }
+      else{
+        Alert.alert('Login Failed', 'User does not exist, try another email and password.');
+      }
+      console.log(error, 'o', email, password);
+    } 
+    setIsLoading(false);
+  };
 
   const handleLogin = () => {
     setFormSubmitted(true);
-
-    if (email.trim() === '') {
-      Alert.alert('Invalid Email', 'Email is required');
-    } else if (!hasErrors(email) && password.trim() !== '') {
-      logUser();
+  
+    if (email.trim() === '' || password.trim() === '') {
+      Alert.alert('Invalid Credentials', 'Please enter both email and password');
+    } else if (!validateEmail(email)) {
+      Alert.alert('Invalid Email', 'Please enter a valid email address');
     } else {
-      Alert.alert('Invalid Credentials', 'Please enter a valid email and password');
+      logUser();
     }
-  }
-
+  };
+  
 
   return (
     <ImageBackground style={[Styles.mh100]} source={Thumbnail.intro_wallpaper}>
@@ -79,9 +94,8 @@ export default function LoginPage() {
               size={35}
               onPress={() => navigation.navigate('entrance')}
             />
-            <Text
-              variant="displaySmall"
-              style={{ color: 'white', textAlign: 'center', textAlignVertical: 'center', marginVertical: 50 }}
+            <Text variant='displaySmall'
+              style={{ color: 'white', textAlign: 'center', textAlignVertical: 'center', marginVertical: 50, fontWeight: "bold" }}
             >
               Login
             </Text>
@@ -106,14 +120,15 @@ export default function LoginPage() {
                   keyboardType="email-address"
                   value={email}
                   onChangeText={setEmail}
+                  right={<TextInput.Icon icon="email" />}
                 />
                 {formSubmitted && email.trim() === '' && (
                   <HelperText type="error" visible={email.trim() === ''}>
                     Email is required
                   </HelperText>
                 )}
-                {formSubmitted && hasErrors(email) && (
-                  <HelperText type="error" visible={hasErrors(email)}>
+                {formSubmitted && !validateEmail(email) && (
+                  <HelperText type="error" visible={!validateEmail(email)}>
                     Please enter a valid email address
                   </HelperText>
                 )}
@@ -126,9 +141,15 @@ export default function LoginPage() {
                   outlineColor="green"
                   selectionColor="green"
                   placeholder="Password"
-                  secureTextEntry={true}
+                  secureTextEntry={!showPassword}
                   value={password}
                   onChangeText={setPassword}
+                  right={
+                    <TextInput.Icon
+                      icon={showPassword ? 'eye-off' : 'eye'}
+                      onPress={() => setShowPassword(!showPassword)}
+                    />
+                  }
                 />
                 {formSubmitted && password.trim() === '' && (
                   <HelperText type="error" visible={password.trim() === ''}>
@@ -138,12 +159,23 @@ export default function LoginPage() {
               </KeyboardAvoidingView>
             </View>
 
-            <Button mode="contained" style={{ width: 260 }} color="green" onPress={handleLogin}>
+            <Button
+              mode="contained"
+              style={{ width: 260 }}
+              color="green"
+              onPress={handleLogin}
+              disabled={!isInternetConnected || email.trim() === '' || password.trim() === ''}
+            >
               Login
             </Button>
           </View>
         </View>
       </ScrollView>
+      {!isInternetConnected && (
+        <Snackbar visible={!isInternetConnected} onDismiss={() => {}}>
+          No internet connection
+        </Snackbar>
+      )}
     </ImageBackground>
   );
 }

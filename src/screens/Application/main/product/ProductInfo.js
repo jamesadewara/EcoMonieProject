@@ -1,12 +1,11 @@
 import { useNavigation } from '@react-navigation/native';
 import React from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
-import { Button, Appbar } from 'react-native-paper';
+import { View, Text, Image, StyleSheet, ScrollView, Linking } from 'react-native';
+import { Button, Appbar, MD2Colors } from 'react-native-paper';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import Swiper from 'react-native-swiper';
 
-
-const SwiperComponent = () => {
+const SwiperComponent = ({ imgs }) => {
   return (
     <Swiper
       style={styles.wrapper}
@@ -27,30 +26,22 @@ const SwiperComponent = () => {
         borderRadius: 10
       }}
     >
-      <View style={styles.slide}>
-        <Image
-          source={require('../../../../../assets/img/anime/calmness.png')}
-          style={{ height: 300, width: 300 }}
-        />
-      </View>
-      <View style={styles.slide}>
-        <Image
-          source={require('../../../../../assets/img/anime/calmness.png')}
-          style={{ height: 300, width: 300 }}
-        />
-      </View>
-      <View style={styles.slide}>
-        <Image
-          source={require('../../../../../assets/img/anime/calmness.png')}
-          style={{ height: 300, width: 300 }}
-        />
-      </View>
+      {imgs?.map((data) => (
+        <View style={styles.slide} key={data.id}>
+          <Image
+            source={{ uri: data.img }}
+            style={{ height: 300, width: 300 }}
+          />
+        </View>
+      ))}
     </Swiper>
   );
 };
 
 const ProductInfoPage = ({ route }) => {
   const navigation = useNavigation();
+  const { data: productInfo, settings, userInfo } = route.params;
+  const { payment_api: paymentApi } = settings;
 
   return (
     <SafeAreaProvider>
@@ -62,32 +53,41 @@ const ProductInfoPage = ({ route }) => {
         <ScrollView>
           <View style={styles.container}>
             <View style={styles.content}>
-              <SwiperComponent />
+              <SwiperComponent imgs={productInfo.image} />
             </View>
 
             <View style={styles.footer}>
               <Image
-                source={require('../../../../../assets/img/anime/calmness.png')}
+                source={{ uri: productInfo.image[0].img }}
                 style={styles.footerIcon}
               />
             </View>
 
             <View style={styles.infoContainer}>
               <View style={styles.infoHeader}>
-                <Text style={styles.infoTitle}>Autobe best Chair</Text>
+                <Text style={styles.infoTitle}>{productInfo.name}</Text>
               </View>
               <View>
-                <Text style={styles.price}>324.69 USD</Text>
+                <Text style={styles.price}>{productInfo.price} NGN</Text>
                 <Text style={styles.description}>
-                Full sleeves short dress with three attractive colors and available in various sizes.
+                  {productInfo.description}
                 </Text>
               </View>
 
-        
-            <View style={{alignSelf: 'center', paddingVertical: 100}}>
-              <Button mode="contained" style={{backgroundColor: "green", width: 250}} onPress={() => console.log('making payment')}>PURCHASE NOW</Button>
-            </View>
-            
+              <View style={{ alignSelf: 'center', paddingVertical: 100 }}>
+                {userInfo?.type_of_business === '2' ? (
+                  <View style={styles.buttonContainer}>
+                    <Button mode="contained" icon="delete" buttonColor={MD2Colors.red500} style={{ flex: 1, marginRight: 10 }} onPress={() => console.log('delete')}>
+                      Delete
+                    </Button>
+                    <Button mode="contained" icon="upload" buttonColor={MD2Colors.blue500} style={{ flex: 1 }} onPress={() => navigation.navigate("upload", {productInfo})}>
+                      Update
+                    </Button>
+                  </View>
+                ) : (
+                  <Button mode="contained" style={{ backgroundColor: "green", width: 250 }} onPress={() => Linking.openURL(paymentApi)}>PURCHASE NOW</Button>
+                )}
+              </View>
             </View>
           </View>
         </ScrollView>
@@ -102,43 +102,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF",
     paddingHorizontal: 10
   },
-  header: {
-    flexDirection: "row",
-    width: "100%",
-    marginTop: 40
-  },
-  backButton: {
-    width: 15,
-    height: 15
-  },
-  cartIcon: {
-    width: "50%",
-    alignItems: "flex-end"
-  },
-  cartIconImage: {
-    width: 16,
-    height: 20
-  },
   content: {
     flexDirection: "row",
     height: 340,
     width: "100%"
-  },
-  statusIndicator: {
-    marginTop: 150
-  },
-  indicatorDot: {
-    backgroundColor: "#3f3a42",
-    height: 25,
-    width: 25,
-    borderRadius: 5,
-    borderWidth: 2,
-    borderColor: "#FFF",
-    elevation: 5
-  },
-  activeIndicatorDot: {
-    backgroundColor: "#707070",
-    marginVertical: 10
   },
   footer: {
     width: "100%",
@@ -163,14 +130,6 @@ const styles = StyleSheet.create({
     color: "#4f4a4a",
     textAlign: 'center'
   },
-  ratingContainer: {
-    width: "35%"
-  },
-  ratingText: {
-    fontWeight: "bold",
-    fontSize: 9,
-    color: "#4f4a4a"
-  },
   price: {
     fontWeight: "bold",
     fontSize: 16,
@@ -183,48 +142,20 @@ const styles = StyleSheet.create({
     color: "#b3aeae",
     marginTop: 20
   },
-  scrollView: {
-    marginTop: 40
-  },
-  imageContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#f5f6fb",
-    height: 80,
-    width: 80,
-    borderRadius: 25,
-    marginRight: 20
-  },
-  image: {
-    height: 80,
-    width: 80
-  },
-  purchaseButton: {
-    backgroundColor: "#000",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 15
-  },
-  purchaseIcon: {
-    height: 20,
-    width: 16
-  },
-  purchaseText: {
-    fontSize: 20,
-    color: "#FFF",
-    fontWeight: "bold",
-    marginHorizontal: 15
-  },
   wrapper: {},
   slide: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#FFF"
-  }
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+    width: 250,
+    alignSelf: 'center',
+  },
 });
 
 export default ProductInfoPage;

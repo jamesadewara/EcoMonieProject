@@ -1,16 +1,14 @@
 import React from "react";
 
-import EntrancePage from "../screens/Registration/Entrance";
+import EntrancePage from "../screens/Account/Entrance";
 
-import LoginPage from "../screens/Registration/Login";
+import LoginPage from "../screens/Account/Authentication/Login";
 
-import RegisterPage from "../screens/Registration/Register";
+import EmailVerificationPage from "../screens/Account/Registration/VerifyEmail";
 
-//import AutoLoginPage from "../screens/Registration/autoLogin";
+import CodeVerificationPage from "../screens/Account/Registration/VerifyCode";
 
-//import EditProfilePage from "../screens/Registration/EditProfile";
-
-//import AutoUpdateUserPage from "../screens/Registration/autoUpdateUser";
+import CreatePasswordPage from "../screens/Account/Registration/CreatePassword";
 
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
@@ -27,15 +25,11 @@ const AuthStack = () => {
 
             <Stack.Screen name="login" component={LoginPage} options={{ headerShown: false }}/> 
 
-            <Stack.Screen name="register" component={RegisterPage} options={{ headerShown: false }}/> 
+            <Stack.Screen name="verify_email" component={EmailVerificationPage} options={{ headerShown: false }}/> 
 
-            {/* <Stack.Screen name="autologin" component={AutoLoginPage} options={{ headerShown: false }}/>  */}
+            <Stack.Screen name="verify_code" component={CodeVerificationPage} options={{ headerShown: false }}/> 
 
-            {/* <Stack.Screen name="editprofile" component={EditProfilePage} options={{ headerShown: false }}/> 
-
-            <Stack.Screen name="autoupdate" component={AutoUpdateUserPage} options={{ headerShown: false }}/>  */}
-
-            
+            <Stack.Screen name="register" component={CreatePasswordPage} options={{ headerShown: false }}/> 
 
         </Stack.Navigator>
     )

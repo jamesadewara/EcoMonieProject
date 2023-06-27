@@ -1,10 +1,10 @@
 import { apiSlice } from "../../api/apiSlice"
 
-export const settingsServerApi = apiSlice.injectEndpoints({
+export const productCategoryServerApi = apiSlice.injectEndpoints({
   endpoints: builder => ({
-    getSettings: builder.query({
+    getCategory: builder.query({
       query: ({accessToken}) => ({
-      url: '/api/settings/',
+      url: '/api/product-category/',
       headers: {
       Authorization: `Bearer ${accessToken}`, // Replace `accessToken` with the actual user's authentication token
                 'Content-Type': 'application/json',
@@ -17,6 +17,5 @@ export const settingsServerApi = apiSlice.injectEndpoints({
 
 
 export const {
-  useGetSettingsQuery,
-} = settingsServerApi;
-
+  useGetCategoryQuery,
+} = productCategoryServerApi;

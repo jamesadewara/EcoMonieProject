@@ -6,6 +6,8 @@ import CustomAlert from '../../../../widgets/customAlert';
 import { Styles } from '../../../../css/design';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import CustomAvatar from '../../../../widgets/customAvatar';
+import * as ImagePicker from 'expo-image-picker';
+import { ImageManipulator } from 'expo-image-manipulator';
 
 
 
@@ -50,9 +52,34 @@ export default function EditProfilePage({ route }) {
     }
   };
 
-  const handleAvatarSelection = () => {
-    // Implement avatar selection logic here
+
+  const handleAvatarSelection = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      alert('Permission to access media library is required!');
+      return;
+    }
+  
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1], // Set the aspect ratio for cropping (square in this example)
+      quality: 1, // Image quality (0 to 1)
+    });
+  
+    if (!result.canceled) {
+      // Crop the image using Expo's ImageManipulator
+      const manipResult = await ImageManipulator.manipulateAsync(
+        result.uri,
+        [{ crop: { originX: 0, originY: 0, width: result.width, height: result.height } }],
+        { compress: 1, format: ImageManipulator.SaveFormat.PNG }
+      );
+      console.log(manipResult)
+      //setAvatar(manipResult.uri);
+
+    }
   };
+  
 
   return (
     <SafeAreaProvider>
@@ -76,8 +103,10 @@ export default function EditProfilePage({ route }) {
           
                 {/* Avatar */} 
                 <View style={{ flexDirection: 'row', alignItems: 'center', alignSelf: 'center' }}>
-                  <CustomAvatar size={150} avatar={avatar} email={email} />
+                  <CustomAvatar size={100} avatar={{ uri: avatar }} email={email} />
+                  
                 </View>
+                <Button title="Select Image" mode="contained" style={{backgroundColor: 'green', marginTop: 30}} onPress={handleAvatarSelection}>Edit Profile </Button>
           
               <Text style={{ fontSize: 40, color: 'green', fontWeight: 'bold' }}>Edit Your Profile</Text>
               <Text style={{ fontSize: 19, color: 'green', fontWeight: 'bold', marginBottom: 20 }}>Update your profile information</Text>

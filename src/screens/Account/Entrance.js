@@ -23,8 +23,6 @@ const Thumbnail = {
 export default function IntroPage() {
 
   const navigation = useNavigation();
-  const token = useSelector(selectCurrentToken)
-  const user = useSelector(selectCurrentUser)
 
   return (
     <ImageBackground style={[Styles.mh100]} source={Thumbnail.intro_wallpaper}>
@@ -35,7 +33,7 @@ export default function IntroPage() {
       <View style={Styles.container}>
         <View style={{ flex: 3, padding: 15, }}>
           <Text variant='displaySmall' style={{color: "white", textAlign: "center", top: "45%" }}>
-            Earn, Impact and be Aware{token}l{user}
+            Earn, Impact and be Aware
           </Text>
         </View>
 
@@ -47,7 +45,7 @@ export default function IntroPage() {
           <Text style={{color: "white", marginVertical: 20}}>
             Or
           </Text>
-          <Button mode='contained' style={{width: 260}} buttonColor={MD2Colors.green700} onPress={() => navigation.navigate('register')}>
+          <Button mode='contained' style={{width: 260}} buttonColor={MD2Colors.green700} onPress={() => navigation.navigate('verify_email')}>
             Signup
           </Button>
         </View>

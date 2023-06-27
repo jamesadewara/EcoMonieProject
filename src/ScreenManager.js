@@ -24,7 +24,7 @@ const ScreenManager = () => {
     const launch = useSelector((state) => state.launch.intro);
     const [isConnected, setIsConnected] = useState(true);
     const [snackbarVisible, setSnackbarVisible] = useState(false);
-    const token = useSelector(selectCurrentToken) && useSelector(selectCurrentUser) //&& userinfo as well
+    const token = useSelector(selectCurrentToken)
     console.log('user info', useSelector(selectCurrentToken), 'token info')
   
     useEffect(() => {
@@ -56,7 +56,7 @@ const ScreenManager = () => {
     return (
     <View style={{ flex: 1 }}>
         <NavigationContainer>
-            {!launch ? <LaunchStack /> : token ? <AppStack /> : <AuthStack />}
+        {!launch ? <LaunchStack /> : token ? <AppStack /> : <AuthStack />}
         </NavigationContainer>
         <Snackbar
           visible={!isConnected && snackbarVisible}

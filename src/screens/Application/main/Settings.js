@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-
 import {
   SafeAreaView,
   Text,
@@ -7,36 +6,34 @@ import {
   Linking,
   StyleSheet,
   View,
+  Image
 } from 'react-native';
-
+import { LinearGradient } from 'expo-linear-gradient';
 import { Button, List, TouchableRipple, Dialog, Portal, Appbar, MD2Colors } from 'react-native-paper';
-
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-
 import { useNavigation } from '@react-navigation/native';
-
 import CustomAlert from '../../../widgets/customAlert';
-
 import { useGetSettingsQuery } from '../../../app/services/features/settingsServerApi';
 import { useDispatch, useSelector } from 'react-redux';
+import { logOut, selectCurrentToken } from '../../../app/actions/authSlice';
+
+const Thumbnail = {
+  noNetwork: require('../../../../assets/img/anime/noInternet.gif'),
+  icon: require('../../../../assets/icon.png')
+};
 
 export default function SettingsPage() {
-  // Hooks and state variables
   const navigation = useNavigation();
+  const dispatch = useDispatch();
 
-  const accessToken = useSelector((state) => state.user.token);
-  const {
-    data: settings = [],
-    isLoading,
-    isFetching,
-  } = useGetSettingsQuery({ accessToken });
+  const accessToken = useSelector(selectCurrentToken);
+  const { data: settings = [], isLoading, isError, error, refetch } = useGetSettingsQuery({ accessToken });
 
   const settingsInfo = settings[0];
-  console.log(settingsInfo)
   const [logoutDialog, setLogoutDialog] = useState(false);
   const [cacheDialog, setCacheDialog] = useState(false);
   const [aboutDialog, setAboutDialog] = useState(false);
-  // Event handlers
+
   const showLogoutDialog = () => setLogoutDialog(true);
   const hideLogoutDialog = () => setLogoutDialog(false);
   const showCacheDialog = () => setCacheDialog(true);
@@ -44,18 +41,21 @@ export default function SettingsPage() {
   const showAboutDialog = () => setAboutDialog(true);
   const hideAboutDialog = () => setAboutDialog(false);
 
-function logout(){
+  function logout() {
+    dispatch(logOut());
+  }
 
-}
-function clearCache(){
-
-}
+  function clearCache() {
+    // Add the necessary code for clearing cache here
+  }
 
   const aboutData = settingsInfo?.about;
   const contactData = settingsInfo?.contact_no;
   const feedbackData = settingsInfo?.feedback_email;
   const shareData = settingsInfo?.share_link;
   const rateData = settingsInfo?.rate_link;
+  const terms_and_serviceData = settingsInfo?.terms_and_service;
+  const help_and_supportData = settingsInfo?.help_and_support;
   const updatesData = settingsInfo?.updates;
 
   const SECTIONS = [
@@ -69,15 +69,15 @@ function clearCache(){
           description: '',
           color: MD2Colors.green900,
           navigate: "edit_profile",
-          data_route: {'email': 'jamesadewara1@gmail.com'}
+          data_route: { 'email': 'jamesadewara1@gmail.com' }
         },
         {
           id: 'change_password',
           icon: 'key',
-          label: 'change your password',
+          label: 'Change your password',
           color: 'silver',
           navigate: "change_password",
-          data_route: {'email': 'jamesadewara1@gmail.com'}
+          data_route: { 'email': 'jamesadewara1@gmail.com' }
         },
         {
           id: 'cache',
@@ -99,7 +99,7 @@ function clearCache(){
       header: 'Services',
       items: [
         {
-          id: 'Notifications',
+          id: 'notifications',
           icon: 'bell',
           label: 'Notifications',
           description: '',
@@ -165,7 +165,7 @@ function clearCache(){
           description: '',
           color: MD2Colors.teal300,
           navigate: "terms",
-          data_route: { page: "Terms & Conditions", link: 'https://www.google.com/'},
+          data_route: { page: "Terms & Conditions", link: terms_and_serviceData },
         },
         {
           id: 'help',
@@ -174,21 +174,44 @@ function clearCache(){
           description: '',
           color: MD2Colors.green300,
           navigate: "terms",
-          data_route: { page: "Help & Support", link: 'https://www.google.com/'},
+          data_route: { page: "Help & Support", link: help_and_supportData },
         },
       ],
     },
   ];
 
-  
-  
-  return (
-    <SafeAreaProvider>
-      <Appbar.Header>
-        <Appbar.Content title="Settings" />
-      </Appbar.Header>
-      {/* <CustomAlert visible={settings.isLoading} message="Loading..." /> */}
-      <SafeAreaView style={styles.safeAreaContainer}>
+  const handleRefresh = () => {
+    refetch();
+  };
+
+  const renderView = () => {
+    if (isError) {
+      return (
+        <SafeAreaProvider>
+          <SafeAreaView style={{ flex: 1, backgroundColor: 'green' }}>
+            <LinearGradient colors={['rgba(0, 0, 0, 0.7)', 'rgba(0, 0, 0, 0.9)']} style={styles.defaultGradient} />
+            <View style={styles.noConnectionContainer}>
+              <Text style={{ color: 'green', fontSize: 25, fontWeight: 'bold', marginBottom: 15 }}>
+                NO NETWORK CONNECTION
+              </Text>
+              <Image source={Thumbnail.noNetwork} style={{ width: 150, height: 150 }} />
+              <View>
+                <Button style={{ backgroundColor: 'green' }} onPress={handleRefresh} mode="contained">
+                  Reload
+                </Button>
+              </View>
+            </View>
+          </SafeAreaView>
+        </SafeAreaProvider>
+      );
+    }
+
+    return (
+      <View>
+        {isLoading && (
+          <CustomAlert visible={isLoading} message="Loading..." />
+        )}
+
         <Portal>
           <Dialog visible={logoutDialog} onDismiss={hideLogoutDialog}>
             <Dialog.Title>Logout</Dialog.Title>
@@ -232,32 +255,40 @@ function clearCache(){
         </Portal>
 
         <ScrollView contentContainerStyle={styles.container}>
-        <React.Fragment>
-              {SECTIONS.map(({ header, items }) => (
-                <View key={header} style={styles.section}>
-                  <List.Section>
-                    <List.Subheader style={styles.sectionHeader}>
-                      {header}
-                    </List.Subheader>
-                    {items.map(({ id, label, icon, color, action, navigate, description, url, data_route }) => (
-                      <TouchableRipple
-                        key={id}
-                        onPress={() => (navigate ? navigation.navigate(navigate, data_route) : url ? Linking.openURL(url) : action())}
-                        rippleColor="rgba(0, 0, 0, .32)">
-                        <List.Item
-                          style={styles.listItem}
-                          description={description}
-                          title={label}
-                          left={() => <List.Icon icon={icon} color={color} />}
-                        />
-                      </TouchableRipple>
-                    ))}
-                  </List.Section>
-                </View>
-              ))}
-            </React.Fragment>
+          <React.Fragment>
+            {SECTIONS.map(({ header, items }) => (
+              <View key={header} style={styles.section}>
+                <List.Section>
+                  <List.Subheader style={styles.sectionHeader}>
+                    {header}
+                  </List.Subheader>
+                  {items.map(({ id, label, icon, color, action, navigate, description, url, data_route }) => (
+                    <List.Item
+                      key={id}
+                      onPress={() => (navigate ? navigation.navigate(navigate, data_route) : url ? Linking.openURL(url) : action())}
+                      style={styles.listItem}
+                      description={description}
+                      title={label}
+                      left={() => <List.Icon icon={icon} color={color} />}
+                    />
+                  ))}
+                </List.Section>
+              </View>
+            ))}
+          </React.Fragment>
           <View style={styles.bottomSpacer} />
         </ScrollView>
+      </View>
+    );
+  };
+
+  return (
+    <SafeAreaProvider>
+      <Appbar.Header>
+        <Appbar.Content title="Settings" />
+      </Appbar.Header>
+      <SafeAreaView style={styles.safeAreaContainer}>
+        {renderView()}
       </SafeAreaView>
     </SafeAreaProvider>
   );
@@ -290,5 +321,19 @@ const styles = StyleSheet.create({
   },
   aboutDialogContent: {
     paddingHorizontal: 24,
+  },
+  defaultGradient: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  noConnectionContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingContainer: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
 });

@@ -3,6 +3,9 @@ import { SafeAreaView, Text, TouchableOpacity, ImageBackground, ScrollView, View
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Searchbar, Appbar } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
+import { useGetProductsQuery } from '../../../../app/services/features/productServerApi';
+import { useGetCategoryQuery } from '../../../../app/services/features/productsCategoryServerApi';
+
 
 const categories = [
   {
@@ -139,6 +142,14 @@ const SearchPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const navigation = useNavigation();
   const [showCateg, setShowCateg] = useState(true);
+  const accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNjg4MzIxMTg5LCJpYXQiOjE2ODc3MTYzODksImp0aSI6IjY3YTY3NGU4YWVhYTQ3Y2ViM2VlZmI1ODk0NTViZjA5IiwidXNlcl9pZCI6MX0.1r6dTLkcXkmiIa45kaK1tiUQxyGgFALvKyW58iN9kGQ"
+  // Use the useGetProductsQuery hook to fetch products data
+  const { data: products, isLoadingProducts, isErrorProducts, errorProducts } = useGetProductsQuery({ accessToken })
+  const { data: categories, isLoadingCategories, isErrorCategories, errorCategories } = useGetCategoryQuery({ accessToken });
+  console.log(categories, "categ pro")
+  
+  
+
 
   const onChangeSearch = (query) => {
     setSearchQuery(query);
@@ -147,6 +158,7 @@ const SearchPage = () => {
 
   const handleFilterCateg = (arg) => {
     console.log(arg);
+    setSearchQuery("Category: " + arg)
   };
 
   return (
@@ -166,22 +178,22 @@ const SearchPage = () => {
             />
             <ScrollView style={{ paddingHorizontal: 10 }} horizontal showsHorizontalScrollIndicator={false}>
               {showCateg ?
-                categories.map((category) => (
+                categories?.map((category) => (
                   <CategoryCard
                     key={category.id}
-                    bg={category.bg}
-                    fg={category.fg}
-                    source={category.source}
-                    name={category.name}
-                    onPress={() => handleFilterCateg(category.name)}
+                    bg={category.background_color}
+                    fg={category.foreground_color}
+                    source={{ uri: category.logo}}
+                    name={category.title}
+                    onPress={() => handleFilterCateg(category.title)}
                   />
                 ))
                 :
-                products.map((data) => (
+                products?.map((data) => (
                   <ProductCard
                     key={data.id}
                     width={windowWidth / 2.2}
-                    source={data.source}
+                    source={{ uri: data.image[0].img }}
                     name={data.name}
                     description={data.description}
                     price={data.price}

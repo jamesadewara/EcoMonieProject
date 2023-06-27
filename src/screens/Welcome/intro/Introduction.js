@@ -37,7 +37,7 @@ export default function IntroPage() {
   const viewConfig = useRef({ viewAreaCoveragePercentThreshold: 50 }).current;
 
   return (
-    <ImageBackground style={[Styles.mh100]} source={Thumbnail.intro_wallpaper}>
+    <ImageBackground style={[Styles.mh100, Styles.mw100]} source={Thumbnail.intro_wallpaper}>
         <LinearGradient
           colors={['rgba(0, 0, 0, 0.7)', 'rgba(0, 0, 0, 0.9)']}
           style={Styles.defaultGradient}
