@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View,  ScrollView, Alert, KeyboardAvoidingView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, ScrollView, Alert, KeyboardAvoidingView } from 'react-native';
 import { Text, Button, TextInput, HelperText, IconButton, Appbar, MD2Colors } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import CustomAlert from '../../../../widgets/customAlert';
@@ -7,9 +7,9 @@ import { Styles } from '../../../../css/design';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import CustomAvatar from '../../../../widgets/customAvatar';
 import * as ImagePicker from 'expo-image-picker';
-import { ImageManipulator } from 'expo-image-manipulator';
-
-
+import * as ImageManipulator from 'expo-image-manipulator';
+import { useDispatch, useSelector } from 'react-redux';
+import { userRegistered, isfirstTimer } from '../../../../app/actions/launchSlice';
 
 export default function EditProfilePage({ route }) {
   const navigation = useNavigation();
@@ -20,19 +20,35 @@ export default function EditProfilePage({ route }) {
   const [contactNo, setContactNo] = useState('');
   const [location, setLocation] = useState('');
   const [address, setAddress] = useState('');
-  const [avatar, setAvatar] = useState(null); // Assuming the avatar is stored as an image URI
-  const [isLoading, setIsLoading ] = useState(false)
+  const [avatar, setAvatar] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const dispatch = useDispatch();
+  const newUser = useSelector(isfirstTimer);
+
+  useEffect(() => {
+    const requestPermissions = async () => {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        alert('Permission to access media library is required!');
+      }
+    };
+
+    requestPermissions();
+  }, []);
 
   const handleUpdateUser = async () => {
-    // Check if the username field is empty
     if (username.trim() === '') {
       Alert.alert('Username is required', 'Please enter a username.');
       return;
     }
 
+    if (newUser) {
+      dispatch(userRegistered(true));
+    }
+
     try {
-      let contact_no = contactNo;
-      let type_of_business = businessType;
+      const contact_no = contactNo;
+      const type_of_business = businessType;
       const updatePayload = {
         email,
         username,
@@ -42,16 +58,14 @@ export default function EditProfilePage({ route }) {
         address,
         avatar,
       };
-      console.log('opow Adewa')
+      console.log('opow Adewa');
 
       Alert.alert('Update Successful', 'User details have been updated successfully!');
     } catch (error) {
-      console.log(error)
-      // Handle error
+      console.log(error);
       Alert.alert('Update Failed', 'An error occurred during user update.');
     }
   };
-
 
   const handleAvatarSelection = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -59,35 +73,35 @@ export default function EditProfilePage({ route }) {
       alert('Permission to access media library is required!');
       return;
     }
-  
+
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1], // Set the aspect ratio for cropping (square in this example)
       quality: 1, // Image quality (0 to 1)
     });
-  
-    if (!result.canceled) {
-      // Crop the image using Expo's ImageManipulator
+
+    if (!result.cancelled) {
       const manipResult = await ImageManipulator.manipulateAsync(
         result.uri,
         [{ crop: { originX: 0, originY: 0, width: result.width, height: result.height } }],
         { compress: 1, format: ImageManipulator.SaveFormat.PNG }
       );
-      console.log(manipResult)
-      //setAvatar(manipResult.uri);
-
+      setAvatar(manipResult.uri);
     }
   };
-  
 
   return (
     <SafeAreaProvider>
-        <Appbar.Header>
-            <Appbar.BackAction onPress={() => navigation.goBack()} />
-            <Appbar.Content title="Edit Profile" />
-        </Appbar.Header>
-      <SafeAreaView>
+      <Appbar.Header>
+        {newUser ? (
+          <Appbar.BackAction onPress={() => navigation.navigate('home')} />
+        ) : (
+          console.log()
+        )}
+        <Appbar.Content title="Edit Profile" />
+      </Appbar.Header>
+      <SafeAreaView style={{ flex: 1 }}>
         <CustomAlert visible={isLoading} message="Loading..." />
         <ScrollView>
           <View style={{ flex: 1 }}>
@@ -95,119 +109,114 @@ export default function EditProfilePage({ route }) {
               style={{
                 alignItems: 'center',
                 backgroundColor: 'white',
-                borderTopRadius: 130,
+                borderTopLeftRadius: 130,
+                borderTopRightRadius: 130,
                 paddingTop: 100,
                 paddingBottom: 45,
               }}
             >
-          
-                {/* Avatar */} 
-                <View style={{ flexDirection: 'row', alignItems: 'center', alignSelf: 'center' }}>
-                  <CustomAvatar size={100} avatar={{ uri: avatar }} email={email} />
-                  
-                </View>
-                <Button title="Select Image" mode="contained" style={{backgroundColor: 'green', marginTop: 30}} onPress={handleAvatarSelection}>Edit Profile </Button>
-          
+              <View style={{ flexDirection: 'row', alignItems: 'center', alignSelf: 'center' }}>
+                <CustomAvatar size={100} avatar={avatar} email={email} />
+              </View>
+              <IconButton
+                icon="camera"
+                mode="contained"
+                style={{ backgroundColor: MD2Colors.green700, position: 'absolute', top: 125 }}
+                onPress={handleAvatarSelection}
+              />
               <Text style={{ fontSize: 40, color: 'green', fontWeight: 'bold' }}>Edit Your Profile</Text>
-              <Text style={{ fontSize: 19, color: 'green', fontWeight: 'bold', marginBottom: 20 }}>Update your profile information</Text>
-
+              <Text style={{ fontSize: 19, color: 'green', fontWeight: 'bold', marginBottom: 20 }}>
+                Update your profile information
+              </Text>
               <View style={{ marginVertical: 30 }}>
-                {/* Email */}
                 <KeyboardAvoidingView style={{ width: 260, margin: 20 }}>
                   <TextInput
                     label="Email"
                     mode="outlined"
                     outlineColor="green"
-                    activeColor="green"
+                    selectionColor="green"
+                    underlineColor="green"
                     placeholder="Email*"
                     value={email}
                     onChangeText={setEmail}
                   />
                 </KeyboardAvoidingView>
-
-                {/* Username */}
                 <KeyboardAvoidingView style={{ width: 260, margin: 20 }}>
                   <TextInput
                     label="Username"
                     mode="outlined"
                     outlineColor="green"
-                    activeColor="green"
+                    selectionColor="green"
+                    underlineColor="green"
                     placeholder="Username"
                     value={username}
                     onChangeText={setUsername}
                   />
                 </KeyboardAvoidingView>
-
-                {/* Business Type */}
                 <KeyboardAvoidingView style={{ width: 260, margin: 20 }}>
                   <TextInput
                     label="Business Type"
                     mode="outlined"
                     outlineColor="green"
-                    activeColor="green"
+                    selectionColor="green"
+                    underlineColor="green"
                     placeholder="Business Type"
                     value={businessType}
                     onChangeText={setBusinessType}
                   />
                 </KeyboardAvoidingView>
-
-                {/* About */}
                 <KeyboardAvoidingView style={{ width: 260, margin: 20 }}>
                   <TextInput
                     label="About"
                     mode="outlined"
                     outlineColor="green"
-                    activeColor="green"
+                    selectionColor="green"
+                    underlineColor="green"
                     placeholder="About"
                     value={about}
                     multiline={true}
                     onChangeText={setAbout}
                   />
                 </KeyboardAvoidingView>
-
-                {/* Contact No */}
                 <KeyboardAvoidingView style={{ width: 260, margin: 20 }}>
                   <TextInput
                     label="Contact No"
                     mode="outlined"
                     outlineColor="green"
-                    activeColor="green"
+                    selectionColor="green"
+                    underlineColor="green"
                     placeholder="Contact No"
                     value={contactNo}
                     onChangeText={setContactNo}
-                    keyboardType='phone-pad'
+                    keyboardType="phone-pad"
                   />
                 </KeyboardAvoidingView>
-
-                {/* Location */}
                 <KeyboardAvoidingView style={{ width: 260, margin: 20 }}>
                   <TextInput
                     label="Location"
                     mode="outlined"
                     outlineColor="green"
-                    activeColor="green"
+                    selectionColor="green"
+                    underlineColor="green"
                     placeholder="Location"
                     value={location}
                     onChangeText={setLocation}
-                    keyboardType='default'
+                    keyboardType="default"
                   />
                 </KeyboardAvoidingView>
-
-                {/* Address */}
                 <KeyboardAvoidingView style={{ width: 260, margin: 20 }}>
                   <TextInput
                     label="Address"
                     mode="outlined"
                     outlineColor="green"
-                    activeColor="green"
+                    selectionColor="green"
+                    underlineColor="green"
                     placeholder="Address"
                     value={address}
                     onChangeText={setAddress}
                   />
                 </KeyboardAvoidingView>
-
               </View>
-
               <Button mode="contained" style={{ width: 260, backgroundColor: 'green', marginBottom: 100 }} onPress={handleUpdateUser}>
                 Save
               </Button>

@@ -151,6 +151,7 @@ export default function LoginPage() {
                     />
                   }
                 />
+                <Button style={{ alignSelf: "flex-end" }} mode="text">Forgot Password</Button>
                 {formSubmitted && password.trim() === '' && (
                   <HelperText type="error" visible={password.trim() === ''}>
                     Password is required

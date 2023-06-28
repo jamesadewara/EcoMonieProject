@@ -41,7 +41,7 @@ const SwiperComponent = ({ imgs }) => {
 const UploadProductPage = ({route}) => {
   const navigation = useNavigation();
   const productInfo = route.params?.productInfo;
-  const [appendImages, setAppendImages] = useState(productInfo?.image || []);
+  const [appendImages, setAppendImages] = useState([]);
   const [currentIndx, setCurrentIndx] = useState(0);
   const [swiperKey, setSwiperKey] = useState(0);
   const [trashName, setTrashName] = useState(productInfo?.name || "");
@@ -49,7 +49,10 @@ const [price, setPrice] = useState(productInfo?.price ? productInfo.price.toStri
 const [description, setDescription] = useState(productInfo?.description || "");
   const [isConnected, setIsConnected] = useState(true);
 
-  console.log(productInfo.image)
+  console.log(productInfo)
+  if (productInfo?.image) {
+    //iterate over the image and add the images to the appendImage
+  }
 
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener((state) => {

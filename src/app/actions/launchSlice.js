@@ -1,21 +1,34 @@
-import { createSlice } from '@reduxjs/toolkit'
+import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
-  intro: false
-}
+  intro: false,
+  register: false,
+};
 
 export const launchSlice = createSlice({
   name: 'launch',
   initialState,
   reducers: {
     authValid: (state, action) => {
-      //if the user has been authenticated show no more intro 
+      // If the user has been authenticated, show no more intro
       state.intro = action.payload;
-    }
+    },
+    userRegistered: (state, action) => {
+      state.register = true;
+    },
+    clearState: (state) => {
+      return {
+        intro: false,
+        register: false,
+      };
+    },
   },
-})
+});
 
 // Action creators are generated for each case reducer function
-export const { authValid } = launchSlice.actions
+export const { authValid, userRegistered, clearState } = launchSlice.actions;
 
-export default launchSlice.reducer
+export const isfirstTimer = (state) => state.launch.register;
+
+export default launchSlice.reducer;
+

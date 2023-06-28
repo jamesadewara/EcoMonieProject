@@ -17,7 +17,7 @@ const BGColor = MD2Colors.green100;
 const SplashPage = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const showedIntro = useSelector(selectCurrentToken) && useSelector(selectCurrentUser) 
+  const showedIntro = useSelector(selectCurrentToken)
 
   useEffect(() => {
     const interval = setInterval(() => {
