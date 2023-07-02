@@ -1,14 +1,14 @@
 import React, { useEffect, useRef } from 'react';
 import { StyleSheet, TouchableOpacity } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { MD2Colors } from 'react-native-paper';
+import { MD2Colors,useTheme } from 'react-native-paper';
 import * as Animatable from 'react-native-animatable';
 import ArticlePage from './main/Article';
 import ProductPage from './main/Product';
 import SettingsPage from './main/Settings';
 import ApprovalPage from './main/Approval';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faHome, faHomeAlt, faShoppingBag, faHandshake, faCog } from '@fortawesome/free-solid-svg-icons';
+import { faHome, faHomeAlt, faShoppingBag, faMessage, faCog } from '@fortawesome/free-solid-svg-icons';
 
 const TabArr = [
   {
@@ -26,10 +26,10 @@ const TabArr = [
     component: ProductPage,
   },
   {
-    route: 'approval',
-    label: 'Approval',
-    activeIcon: faHandshake,
-    inActiveIcon: faHandshake,
+    route: 'chat',
+    label: 'Chat',
+    activeIcon: faMessage,
+    inActiveIcon: faMessage,
     component: ApprovalPage,
   },
   {
@@ -49,9 +49,10 @@ const TabArr = [
 const Tab = createBottomTabNavigator();
 
 const TabButton = (props) => {
-  const { item, onPress, accessibilityState } = props;
+  const { item, onPress, accessibilityState,color } = props;
   const focused = accessibilityState.selected;
   const viewRef = useRef(null);
+
 
   useEffect(() => {
     if (focused) {
@@ -66,7 +67,7 @@ const TabButton = (props) => {
       <Animatable.View ref={viewRef} duration={1000} style={styles.container}>
         <FontAwesomeIcon
           icon={focused ? item.activeIcon : item.inActiveIcon}
-          color={focused ? MD2Colors.green700 : MD2Colors.grey500}
+          color={focused ? MD2Colors.green800 : color}
           size={24}
         />
       </Animatable.View>
@@ -75,6 +76,8 @@ const TabButton = (props) => {
 };
 
 export default function MainScreen() {
+      // Access the current theme from react-native-paper
+      const theme = useTheme();
   return (
     <Tab.Navigator
       screenOptions={{
@@ -86,6 +89,7 @@ export default function MainScreen() {
           right: 16,
           left: 16,
           borderRadius: 16,
+          backgroundColor:theme.colors.appbar
         },
       }}
     >
@@ -96,7 +100,7 @@ export default function MainScreen() {
           component={item.component}
           options={{
             tabBarShowLabel: false,
-            tabBarButton: (props) => <TabButton {...props} item={item} />,
+            tabBarButton: (props) => <TabButton {...props} item={item} color={theme.colors.color}/>,
           }}
         />
       ))}

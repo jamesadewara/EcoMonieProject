@@ -1,6 +1,6 @@
-import React, { useContext } from "react";
+import React from "react";
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Provider as PaperProvider } from 'react-native-paper';
+
 import MainScreen from "../screens/Application/Main";
 import ProductInfoPage from "../screens/Application/main/product/ProductInfo";
 import TermsPage from "../screens/Application/main/other/Terms";
@@ -9,31 +9,44 @@ import EditProfilePage from "../screens/Application/main/other/EditProfile";
 import NotificationPage from "../screens/Application/main/other/Notification";
 import SearchPage from "../screens/Application/main/other/SearchPage";
 import UploadProductPage from "../screens/Application/main/product/UploadProduct";
-import { isfirstTimer } from "../app/actions/launchSlice";
-import { useSelector } from "react-redux";
-
+import PaymentPage from "../screens/Application/main/product/Payment";
+import ChatRoomPage from "../screens/Application/main/approves/ChatRoom";
 
 const Stack = createNativeStackNavigator();
 
 const AppStack = () => {
-    const newUser = useSelector(isfirstTimer);
-
   return (
-    <PaperProvider>
-      <Stack.Navigator
-        initialRouteName={newUser ? "main" : "edit_profile"}
-        screenOptions={{ headerShown: false }}
-      >
-        <Stack.Screen name="main" component={MainScreen} />
-        <Stack.Screen name="change_password" component={ChangePasswordPage} />
-        <Stack.Screen name="terms" component={TermsPage} />
-        <Stack.Screen name="product_info" component={ProductInfoPage} />
-        <Stack.Screen name="edit_profile" component={EditProfilePage} />
-        <Stack.Screen name="notification" component={NotificationPage} />
-        <Stack.Screen name="search" component={SearchPage} />
-        <Stack.Screen name="upload" component={UploadProductPage} />
-      </Stack.Navigator>
-    </PaperProvider>
+    <Stack.Navigator initialRouteName="main" screenOptions={{ headerShown: false }}>
+      {/* Main Screen */}
+      <Stack.Screen name="main" component={MainScreen} />
+
+      {/* Change Password Page */}
+      <Stack.Screen name="change_password" component={ChangePasswordPage} />
+
+      {/* Terms Page */}
+      <Stack.Screen name="terms" component={TermsPage} />
+
+      {/* Product Info Page */}
+      <Stack.Screen name="product_info" component={ProductInfoPage} />
+
+      {/* Edit Profile Page */}
+      <Stack.Screen name="edit_profile" component={EditProfilePage} />
+
+      {/* Notification Page */}
+      <Stack.Screen name="notification" component={NotificationPage} />
+
+      {/* Search Page */}
+      <Stack.Screen name="search" component={SearchPage} />
+
+      {/* Upload Product Page */}
+      <Stack.Screen name="upload" component={UploadProductPage} />
+
+      {/* Payment Page */}
+      <Stack.Screen name="payment" component={PaymentPage} />
+
+      {/* Chat Room Page */}
+      <Stack.Screen name="room" component={ChatRoomPage} />
+    </Stack.Navigator>
   );
 };
 

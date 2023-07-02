@@ -1,13 +1,19 @@
-import React, { useState } from 'react';
-import { SafeAreaView, Text, TouchableOpacity, ImageBackground, ScrollView, View, Image, Dimensions } from 'react-native';
+// Import statements
+import React, { useState, useEffect } from 'react';
+import { SafeAreaView, Text, TouchableOpacity, ImageBackground, ScrollView, View, Image, Dimensions, StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { Searchbar, Appbar } from 'react-native-paper';
+import { Searchbar, Appbar, useTheme } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { useGetProductsQuery } from '../../../../app/services/features/productServerApi';
 import { useGetCategoryQuery } from '../../../../app/services/features/productsCategoryServerApi';
+import { selectCurrentToken } from '../../../../app/actions/authSlice';
+import { useSelector } from 'react-redux';
+import { useGetUserQuery } from '../../../../app/services/user/userApiSlice';
+import { useGetSettingsQuery } from '../../../../app/services/features/settingsServerApi';
+import { ProductList, CategoryList } from '../../../../Components/ProductCard'; // Assuming ProductList and CategoryList are exported from the mentioned path
 
-
-const categories = [
+// Sample data for category and product
+const categoryData = [
   {
     id: '1',
     name: 'Trye',
@@ -17,35 +23,7 @@ const categories = [
   }
 ];
 
-const CategoryCard = ({ source, name, bg, fg, onPress }) => {
-  return (
-    <TouchableOpacity onPress={onPress}>
-      <ImageBackground
-        source={source}
-        style={{
-          height: 130,
-          width: 230,
-          marginRight: 20,
-          borderRadius: 10,
-          marginBottom: 40,
-          opacity: 0.7,
-          backgroundColor: bg,
-          marginLeft: 3,
-          padding: 12,
-          marginTop: 20
-        }}
-      >
-        <Text style={{
-          fontWeight: 'bold',
-          color: fg,
-          fontSize: 15
-        }}>{name}</Text>
-      </ImageBackground>
-    </TouchableOpacity>
-  );
-};
-
-const products = [
+const productData = [
   {
     id: '1',
     name: 'Adewa',
@@ -55,158 +33,123 @@ const products = [
     avatar: null
   }
 ];
-const windowWidth = Dimensions.get('window').width;
-
-const ProductCard = ({ onPress, source, profile, name, price, description, date, width }) => {
-  const currentDateTime = new Date();
-  const djangoDate = new Date(date);
-  const isNew = djangoDate > currentDateTime;
-
-  return (
-    <TouchableOpacity
-      onPress={onPress}
-      style={{
-        marginTop: 30,
-        backgroundColor: "#FFF",
-        height: 210,
-        width: width,
-        elevation: 2,
-        borderRadius: 10,
-        padding: 15,
-        marginRight: 5,
-      }}
-    >
-      <Image
-        source={source}
-        style={{
-          width: '100%',
-          height: 70,
-          borderRadius: 10
-        }}
-      />
-      <View style={{
-        flexDirection: "row",
-        alignItems: "center",
-        marginVertical: 10
-      }}>
-        <Text style={{
-          fontWeight: "bold",
-          color: "#4f4a4a",
-          fontSize: 12
-        }} numberOfLines={1} ellipsizeMode='tail'>
-          {name}
-        </Text>
-        <View style={{
-          height: 4,
-          width: 4,
-          borderRadius: 4,
-          backgroundColor: "red",
-          marginHorizontal: 4
-        }}>
-        </View>
-      </View>
-      <Text style={{
-        color: "red",
-        fontSize: 9,
-        fontWeight: "bold"
-      }}>
-        {isNew ? "New" : ""}
-      </Text>
-      <Text style={{
-        fontSize: 9,
-        color: "#4f4a4a",
-        fontWeight: "normal",
-      }} numberOfLines={3} ellipsizeMode='tail'>
-        {description}
-      </Text>
-      <View style={{
-        flexDirection: "row",
-        marginTop: 5,
-        alignItems: "center",
-        width: "100%"
-      }}>
-        <View style={{
-          width: "80%"
-        }}>
-          <Text style={{
-            fontSize: 15,
-            fontWeight: "bold"
-          }}>{price} NGN</Text>
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
-};
 
 const SearchPage = () => {
+  // State variables
   const [searchQuery, setSearchQuery] = useState('');
-  const navigation = useNavigation();
   const [showCateg, setShowCateg] = useState(true);
-  const accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNjg4MzIxMTg5LCJpYXQiOjE2ODc3MTYzODksImp0aSI6IjY3YTY3NGU4YWVhYTQ3Y2ViM2VlZmI1ODk0NTViZjA5IiwidXNlcl9pZCI6MX0.1r6dTLkcXkmiIa45kaK1tiUQxyGgFALvKyW58iN9kGQ"
-  // Use the useGetProductsQuery hook to fetch products data
-  const { data: products, isLoadingProducts, isErrorProducts, errorProducts } = useGetProductsQuery({ accessToken })
-  const { data: categories, isLoadingCategories, isErrorCategories, errorCategories } = useGetCategoryQuery({ accessToken });
-  console.log(categories, "categ pro")
-  
-  
+  const [filteredProducts, setFilteredProducts] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
 
+  // Navigation
+  const navigation = useNavigation();
 
+  // Redux state
+  const accessToken = useSelector(selectCurrentToken);
+
+  // Custom hooks to fetch data from APIs
+  const { data: productsData, isLoading: isLoadingProducts, isError: isErrorProducts, error: errorProducts, refetch: productsRefetch } = useGetProductsQuery({ accessToken });
+  const { data: categoriesData, isLoading: isLoadingCategories, isError: isErrorCategories, error: errorCategories } = useGetCategoryQuery({ accessToken });
+  const { data: userInfo, isLoading: isLoadingUser, isError: isErrorUser, refetch: userRefetch } = useGetUserQuery({ accessToken });
+  const { data: settings = [], isLoading: isLoadingSettings, refetch: settingsRefetch } = useGetSettingsQuery({ accessToken });
+
+  // Theme
+  const theme = useTheme();
+
+  // useEffect to fetch data on component mount
+  useEffect(() => {
+    userRefetch();
+    settingsRefetch();
+    productsRefetch();
+  }, []);
+
+  // Function to handle search
+  const handleSearch = (query) => {
+    setFilteredProducts(productsData.filter((product) =>
+      product.name.toLowerCase().includes(query.toLowerCase()) ||
+      product.price.toString().includes(query.toLowerCase()) ||
+      product.category.title.toString().toLowerCase().includes(query.toLowerCase())
+    ));
+  };
+
+  // Function to handle search query change
   const onChangeSearch = (query) => {
     setSearchQuery(query);
     setShowCateg(!query);
+    handleSearch(query);
   };
 
-  const handleFilterCateg = (arg) => {
-    console.log(arg);
-    setSearchQuery("Category: " + arg)
+  // Function to handle refreshing the products data
+  const handleRefresh = () => {
+    setRefreshing(true);
+    productsRefetch();
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 1000);
   };
+
+  // Function to handle category filter
+  const handleFilterCateg = (arg) => {
+    handleSearch(arg);
+    setShowCateg(!arg);
+  };
+
+  // Render no results found message
+  const renderNoResultsFound = () => (
+    <Text style={{ textAlign: 'center', margin: 30 }}>
+      No results found
+    </Text>
+  );
+
+  // Render results count
+  const renderResultsCount = () => (
+    <Text style={{ margin: 10 }}>
+      Result(s) found: {filteredProducts.length}
+    </Text>
+  );
 
   return (
     <SafeAreaProvider>
       <SafeAreaView style={{ flex: 1 }}>
-        <Appbar.Header>
-          <Appbar.BackAction onPress={() => navigation.goBack()} />
-          <Appbar.Content title="Search" />
+        <Appbar.Header style={{ backgroundColor: theme.colors.appbar }}>
+          <Appbar.BackAction
+            icon="magnify"
+            iconColor={theme.colors.color}
+            onPress={() => navigation.goBack()}
+          />
+          <Searchbar
+            placeholder="Find trash..."
+            onChangeText={onChangeSearch}
+            value={searchQuery}
+            placeholderTextColor="#aaa"
+            inputStyle={{ color: theme.colors.color }}
+            style={{ flex: 1, marginRight: 16, backgroundColor: theme.colors.appbar }}
+            clearIcon={null}
+            iconColor={theme.colors.color}
+          />
         </Appbar.Header>
-        <ScrollView showsVerticalScrollIndicator={false}>
+        <ScrollView showsVerticalScrollIndicator={false} style={{ backgroundColor: theme.colors.background, flex: 1 }}>
+          {filteredProducts.length === 0 ? renderNoResultsFound() : renderResultsCount()}
           <View>
-            <Searchbar
-              placeholder="Find trash..."
-              onChangeText={onChangeSearch}
-              value={searchQuery}
-              style={{ marginHorizontal: 16, marginTop: 16 }}
-            />
-            <ScrollView style={{ paddingHorizontal: 10 }} horizontal showsHorizontalScrollIndicator={false}>
-              {showCateg ?
-                categories?.map((category) => (
-                  <CategoryCard
-                    key={category.id}
-                    bg={category.background_color}
-                    fg={category.foreground_color}
-                    source={{ uri: category.logo}}
-                    name={category.title}
-                    onPress={() => handleFilterCateg(category.title)}
-                  />
-                ))
-                :
-                products?.map((data) => (
-                  <ProductCard
-                    key={data.id}
-                    width={windowWidth / 2.2}
-                    source={{ uri: data.image[0].img }}
-                    name={data.name}
-                    description={data.description}
-                    price={data.price}
-                    onPress={() => navigation.navigate('product_info', { data })}
-                  />
-                ))
-              }
-            </ScrollView>
+            {showCateg ? (
+              <CategoryList categoriesData={categoriesData} handleFilterCateg={handleFilterCateg} />
+            ) : (
+              <ProductList products={filteredProducts} backgroundColor={theme.colors.cardsdiaogs} color={theme.colors.color} navigation={navigation} refreshing={refreshing} handleRefresh={handleRefresh} />
+            )}
           </View>
         </ScrollView>
       </SafeAreaView>
     </SafeAreaProvider>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    width: '100%',
+    flexDirection: 'row',
+    paddingHorizontal: 10,
+    flexWrap: 'wrap',
+  },
+});
 
 export default SearchPage;

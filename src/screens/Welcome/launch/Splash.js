@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useSelector } from "react-redux";
-import { ActivityIndicator, Text, MD2Colors } from 'react-native-paper';
-import { View, Animated } from 'react-native';
+import { ActivityIndicator, MD2Colors } from 'react-native-paper';
+import { View, Animated, StatusBar } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch } from 'react-redux';
 import { authValid } from '../../../app/actions/launchSlice';
@@ -17,7 +17,7 @@ const BGColor = MD2Colors.green100;
 const SplashPage = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const showedIntro = useSelector(selectCurrentToken)
+  const showedIntro = useSelector(selectCurrentToken);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -46,6 +46,11 @@ const SplashPage = () => {
         backgroundColor: BGColor,
       }}
     >
+      <StatusBar
+        barStyle="dark-content" // Use light text color for status bar
+        backgroundColor="transparent" // Set status bar background color to transparent
+        translucent // Make the status bar translucent
+      />
       <Animated.View
         style={{
           flex: 1,

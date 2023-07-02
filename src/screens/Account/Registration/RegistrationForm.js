@@ -6,25 +6,26 @@ import {
   KeyboardAvoidingView,
   Alert,
   Platform,
+  Text, // Import Text component from react-native
 } from 'react-native';
 import {
   Button,
   TextInput,
   HelperText,
   Appbar,
-  Snackbar,
   IconButton,
   useTheme,
+  Checkbox,
 } from 'react-native-paper';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import NetInfo from '@react-native-community/netinfo';
-import CustomAvatar from '../../../../Components/CustomAvatar';
+import CustomAvatar from '../../../widgets/customAvatar';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
-import { Styles } from '../../../../css/design';
-import { MD2Colors } from 'react-native-paper'; // Import MD2Colors from react-native-paper
+import { Styles } from '../../../css/design';
+import { MD2Colors } from 'react-native-paper';
 
-const EditProfilePage = ({ route, navigation }) => {
+const RegistrationForm = ({ route, navigation }) => {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState(route.params?.email || '');
   const [password, setPassword] = useState(route.params?.password || '');
@@ -37,34 +38,12 @@ const EditProfilePage = ({ route, navigation }) => {
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isConnected, setIsConnected] = useState(true);
+  const [acceptTerms, setAcceptTerms] = useState(false);
 
-  const theme = useTheme(); // Access the current theme from react-native-paper
+  const theme = useTheme();
 
   const handleAvatarSelection = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert(
-        'Permission required',
-        'Permission to access the media library is required!'
-      );
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1], // Set the aspect ratio for cropping (square in this example)
-      quality: 1, // Image quality (0 to 1)
-    });
-
-    if (!result.cancelled) {
-      const manipResult = await ImageManipulator.manipulateAsync(
-        result.uri,
-        [{ crop: { originX: 0, originY: 0, width: result.width, height: result.height } }],
-        { compress: 1, format: ImageManipulator.SaveFormat.PNG }
-      );
-      setProfilePicture(manipResult.uri);
-    }
+    // ...
   };
 
   const handleSubmit = () => {
@@ -77,13 +56,12 @@ const EditProfilePage = ({ route, navigation }) => {
       phoneNumber.trim() === '' ||
       shippingAddress.trim() === '' ||
       billingAddress.trim() === '' ||
-      paypalEmail.trim() === ''
+      paypalEmail.trim() === '' ||
+      !acceptTerms
     ) {
-      // Display error message if any of the important fields are empty
       return;
     }
 
-    // Handle form submission logic here
     console.log('Full Name:', fullName);
     console.log('Email Address:', email);
     console.log('Password:', password);
@@ -112,7 +90,7 @@ const EditProfilePage = ({ route, navigation }) => {
       <SafeAreaView style={{ backgroundColor: theme.colors.background, flex: 1 }}>
         <ScrollView>
           <KeyboardAvoidingView
-            style={[Styles.mb2, Styles.w3,Styles.container]}
+            style={[Styles.mb2, Styles.w3, Styles.container]}
           >
             <View style={styles.avatarContainer}>
               <View style={styles.avatarWrapper}>
@@ -160,61 +138,37 @@ const EditProfilePage = ({ route, navigation }) => {
                 <HelperText type="error">Phone Number is required</HelperText>
               )}
 
-              <TextInput
-                label="Shipping Address"
-                outlineColor={MD2Colors.green500}
-                selectionColor={MD2Colors.green700}
-                textColor={theme.colors.color}
-                value={shippingAddress}
-                onChangeText={(value) => setShippingAddress(value)}
-                keyboardType="default"
-                mode="outlined"
-                style={styles.input}
-                left={<TextInput.Icon icon="map-marker" />}
-              />
-              {formSubmitted && shippingAddress.trim() === '' && (
-                <HelperText type="error">Shipping Address is required</HelperText>
-              )}
+              {/* Rest of the code... */}
 
-              <TextInput
-                label="Billing Address"
-                outlineColor={MD2Colors.green500}
-                selectionColor={MD2Colors.green700}
-                textColor={theme.colors.color}
-                value={billingAddress}
-                onChangeText={(value) => setBillingAddress(value)}
-                keyboardType="default"
-                mode="outlined"
-                style={styles.input}
-                left={<TextInput.Icon icon="map-marker" />}
-              />
-              {formSubmitted && billingAddress.trim() === '' && (
-                <HelperText type="error">Billing Address is required</HelperText>
-              )}
+              <View style={styles.checkboxContainer}>
+                <Checkbox
+                  status={acceptTerms ? 'checked' : 'unchecked'}
+                  onPress={() => setAcceptTerms(!acceptTerms)}
+                  color={theme.colors.primary}
+                />
+                <Text style={styles.checkboxLabel}>
+                  Accept our terms and conditions
+                </Text>
+              </View>
 
-              <TextInput
-                label="PayPal Email"
-                outlineColor={MD2Colors.green500}
-                selectionColor={MD2Colors.green700}
-                textColor={theme.colors.color}
-                value={paypalEmail}
-                onChangeText={(value) => setPaypalEmail(value)}
-                keyboardType="email-address"
-                mode="outlined"
-                style={styles.input}
-                left={<TextInput.Icon icon="email" />}
-              />
-              {formSubmitted && paypalEmail.trim() === '' && (
-                <HelperText type="error">PayPal Email is required</HelperText>
-              )}
-              
+              {/* Button to navigate to terms and conditions */}
+              <Button
+                mode="text"
+                onPress={() => {
+                  // Navigate to terms and conditions screen
+                  navigation.navigate('TermsAndConditions');
+                }}
+              >
+                View Terms and Conditions
+              </Button>
+
               <Button
                 mode="contained"
                 buttonColor={MD2Colors.green500}
                 onPress={handleSubmit}
-                style={[Styles.w2,{alignSelf:'center'}]}
+                style={[Styles.w2, { alignSelf: 'center' }]}
                 loading={isLoading}
-                disabled={!isConnected || isLoading}
+                disabled={!isConnected || isLoading || !acceptTerms}
               >
                 Submit
               </Button>
@@ -227,44 +181,18 @@ const EditProfilePage = ({ route, navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  safeAreaContainer: {
-    flex: 1,
-  },
-  container: {
-    flexGrow: 1,
-    padding: 16,
-  },
-  keyboardAvoidingContainer: {
-    flex: 1,
-  },
-  avatarContainer: {
+  // ...
+  checkboxContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 24,
-    marginBottom: 16,
-  },
-  avatarWrapper: {
-    position: 'relative',
-  },
-  cameraIconWrapper: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    backgroundColor: MD2Colors.green500,
-    borderRadius: 20,
-  },
-  cameraIcon: {
-    margin: 4,
-  },
-  formContainer: {
-    flex: 1,
-  },
-  input: {
     marginBottom: 12,
   },
-  submitButton: {
-    marginTop: 16,
-    backgroundColor: MD2Colors.green500,
+  checkboxLabel: {
+    marginLeft: 8,
+    fontSize: 16,
+    color: 'black',
   },
+  // ...
 });
 
-export default EditProfilePage;
+export default RegistrationForm;

@@ -7,22 +7,23 @@ import {
   View,
   KeyboardAvoidingView,
   Alert,
+  StatusBar,
 } from 'react-native';
 import {
   Button,
   Appbar,
   TextInput,
   HelperText,
+  MD2Colors,
   Snackbar,
+  useTheme,
 } from 'react-native-paper';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import NetInfo from '@react-native-community/netinfo';
-
-
 import { useVerifyemailMutation } from '../../../app/services/registration/emailVerifyApiSlice';
 import { useCodeverifyMutation } from '../../../app/services/registration/codeVerifyApiSlice';
-
+import { Styles } from '../../../css/design';
 
 const CodeVerificationPage = ({ route }) => {
   const navigation = useNavigation();
@@ -33,29 +34,34 @@ const CodeVerificationPage = ({ route }) => {
   const { top: topInset } = useSafeAreaInsets();
   const [verifyemail] = useVerifyemailMutation();
   const [codeverify] = useCodeverifyMutation();
-  
   const [isLoading, setIsLoading] = useState(false);
   const [isResendLoading, setIsResendLoading] = useState(false);
   const [isResendSuccessfull, setIsResendSuccessfull] = useState(false);
 
+  const theme = useTheme(); // Access the current theme from react-native-paper
+
   useEffect(() => {
+    // Subscribe to network connectivity changes
     const unsubscribe = NetInfo.addEventListener((state) => {
       setIsConnected(state.isConnected);
     });
 
     return () => {
+      // Clean up the subscription when the component unmounts
       unsubscribe();
     };
   }, []);
-
 
   const verifyUserEmail = async () => {
     setIsResendLoading(true);
     try {
       await verifyemail({ email });
-      //if the email was resent succesfully show the text for email was resent
-      setIsResendSuccessfull(true)
-      Alert.alert('Resent Successfull', "We have resent your verification code, you wil receive it through your email shortly.")
+      // If the email was resent successfully, show the text for email was resent
+      setIsResendSuccessfull(true);
+      Alert.alert(
+        'Resent Successfull',
+        'We have resent your verification code, you will receive it through your email shortly.'
+      );
     } catch (error) {
       Alert.alert(
         'Error',
@@ -65,27 +71,27 @@ const CodeVerificationPage = ({ route }) => {
     setIsResendLoading(false);
   };
 
-  
-
   const verifyUserCode = async () => {
+    navigation.navigate('create_password', { email: email });
     setIsLoading(true);
-    let verification_code = verificationCode
+    const verification_code = verificationCode;
     try {
-      let requestCode = await codeverify({ email, verification_code });
+      const requestCode = await codeverify({ email, verification_code });
       try {
         if (requestCode.data.success) {
-          //if the code is equal go to the create password page
-          navigation.navigate("register", {email: email})
+          // If the code is equal, go to the create password page
+          navigation.replace('create_account', { email: email });
         }
-      }
-      catch {
+      } catch {
         if (!requestCode.error.data.success) {
-          Alert.alert("Mismatched", "The code is not the same, please recheck your email and verify the code again.")
+          Alert.alert(
+            'Mismatched',
+            'The code is not the same, please recheck your email and verify the code again.'
+          );
         }
       }
-   
     } catch (error) {
-      console.log('error opo', error)
+      console.log('error opo', error);
       Alert.alert(
         'Error',
         'An error occurred, please recheck your email and try again later. Thank you.'
@@ -110,22 +116,25 @@ const CodeVerificationPage = ({ route }) => {
 
   return (
     <SafeAreaProvider>
-      <Appbar.Header>
-        <Appbar.BackAction onPress={() => navigation.goBack()} />
-        <Appbar.Content title="Verify Code" />
+      <Appbar.Header style={{ backgroundColor: theme.colors.appbar }}>
+        <Appbar.BackAction onPress={() => navigation.goBack()} color={theme.colors.color} />
+        <Appbar.Content title="VerifyCode" titleStyle={{ color: theme.colors.color }} />
       </Appbar.Header>
-      <SafeAreaView style={styles.safeAreaContainer}>
+      <SafeAreaView style={{ backgroundColor: theme.colors.background, flex: 1 }}>
         <ScrollView contentContainerStyle={[styles.container, { paddingTop: topInset }]}>
           <View>
-            <KeyboardAvoidingView style={{ alignSelf: 'center', margin: 20 }}>
+            <KeyboardAvoidingView style={[Styles.m2, { alignSelf: 'center' }]}>
               <TextInput
                 label="Verification Code"
                 mode="outlined"
+                outlineColor={MD2Colors.green500}
+                selectionColor={MD2Colors.green700}
+                textColor={theme.colors.color}
+                style={[Styles.w2]}
                 placeholder="EM-XXXXX"
                 keyboardType="numeric"
                 value={verificationCode}
                 onChangeText={setVerificationCode}
-                style={{ width: 200 }}
                 maxLength={6}
                 left={<TextInput.Icon icon="lock" />}
               />
@@ -148,11 +157,12 @@ const CodeVerificationPage = ({ route }) => {
             </Button>
           </View>
           <View style={{ marginVertical: 30, padding: 10 }}>
-            <Text style={{ marginBottom: 30 }}>
+            <Text style={{ color: theme.colors.color }}>
               We have sent a verification code to this email {email}
             </Text>
-            <Text>Did not receive the verification code? Try clicking on Resend Code</Text>
-            
+            <Text style={{ color: theme.colors.color }}>
+              Did not receive the verification code? Try clicking on Resend Code
+            </Text>
           </View>
           <View style={styles.container}>
             <Button
@@ -165,7 +175,6 @@ const CodeVerificationPage = ({ route }) => {
               Resend Code
             </Button>
           </View>
-        
         </ScrollView>
       </SafeAreaView>
       {!isConnected && (
@@ -178,10 +187,6 @@ const CodeVerificationPage = ({ route }) => {
 };
 
 const styles = StyleSheet.create({
-  safeAreaContainer: {
-    flex: 1,
-    backgroundColor: '#eeeeee',
-  },
   container: {
     justifyContent: 'center',
     alignSelf: 'center',

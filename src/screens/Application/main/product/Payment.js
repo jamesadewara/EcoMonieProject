@@ -4,29 +4,35 @@ import { WebView } from 'react-native-webview';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Styles } from '../../../../css/design';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Button, MD2Colors, Appbar,useTheme } from "react-native-paper";
+import { Button, MD2Colors, Appbar, useTheme } from "react-native-paper";
 import { BASE_URL } from "../../../../config"
 import { useNavigation } from '@react-navigation/native';
 import ErrorPage from '../../../../Components/ErrorPage';
+import { selectCurrentToken } from '../../../../app/actions/authSlice';
+import { useGetSettingsQuery } from '../../../../app/services/features/settingsServerApi';
+import { useSelector } from 'react-redux';
 
+const PaymentPage = ({ route }) => {
+  const navigation = useNavigation();
+  const accessToken = useSelector(selectCurrentToken);
 
-const Thumbnail = {
-  noNetwork: require('../../../../../assets/img/anime/noInternet.gif'),
-};
+  // Query for getting settings
+  const {
+    data: settings = [],
+    isLoading,
+    isError,
+    refetch
+  } = useGetSettingsQuery({ accessToken });
 
-const TermsPage = ({route}) => {
-    const navigation = useNavigation();
-    const link = route.params?.link;
-    const page = route.params?.page;
-    const [isError, setIsError] = useState(false);
-    const [refreshing, setRefreshing] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
-    // Theme
+  const link = "https:www.com"//settings//.payment_api
+  console.log(settings)
+
+  // Theme
   const theme = useTheme();
-
+  const [refreshing, setRefreshing] = useState(false);
 
   const reloadWebView = () => {
-    setIsError(false);
+    refetch()
   };
 
   const handleRefresh = () => {
@@ -38,8 +44,9 @@ const TermsPage = ({route}) => {
   };
 
   const renderWebView = () => {
+    // Display error page if there is an error
     if (isError) {
-      return <ErrorPage handleRefresh={handleRefresh} />
+      return <ErrorPage handleRefresh={handleRefresh} />;
     }
 
     return (
@@ -61,22 +68,21 @@ const TermsPage = ({route}) => {
 
   return (
     <SafeAreaProvider>
-        <Appbar.Header style={{ backgroundColor: theme.colors.appbar }}>
-          <Appbar.BackAction
-            iconColor={theme.colors.color}
-            onPress={() => navigation.goBack()}
-          />
-          <Appbar.Content title={page} titleStyle={{color:theme.colors.color}}/>
-          </Appbar.Header>
-        <ScrollView
-            contentContainerStyle={{backgroundColor:theme.colors.background, flex:1}}
-            refreshControl={
-                <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-            }
-            >
-            {renderWebView()}
-        </ScrollView>
- 
+      <Appbar.Header style={{ backgroundColor: theme.colors.appbar }}>
+        <Appbar.BackAction
+          iconColor={theme.colors.color}
+          onPress={() => navigation.goBack()}
+        />
+        <Appbar.Content title="Payment" titleStyle={{ color: theme.colors.color }} />
+      </Appbar.Header>
+      <ScrollView
+        contentContainerStyle={styles.scrollViewContent}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+        }
+      >
+        {renderWebView()}
+      </ScrollView>
     </SafeAreaProvider>
   );
 };
@@ -105,4 +111,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default TermsPage;
+export default PaymentPage;

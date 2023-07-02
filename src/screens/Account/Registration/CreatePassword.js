@@ -1,18 +1,34 @@
 import React, { useState, useEffect } from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, View, KeyboardAvoidingView, Alert } from 'react-native';
-import { Button, Appbar, TextInput, HelperText, Snackbar } from 'react-native-paper';
+import {
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  View,
+  KeyboardAvoidingView,
+  Alert,
+} from 'react-native';
+import {
+  Button,
+  Appbar,
+  TextInput,
+  HelperText,
+  Snackbar,
+  useTheme,
+  MD2Colors,
+} from 'react-native-paper';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch } from 'react-redux';
 import { setCredentials } from '../../../app/actions/authSlice';
-import CustomAlert from '../../../widgets/customAlert';
 import { useSignupMutation } from '../../../app/services/registration/signupApiSlice';
 import { useLoginMutation } from '../../../app/services/authentication/authApiSlice';
 import { userRegistered } from '../../../app/actions/launchSlice';
+import { StatusBar } from 'expo-status-bar';
+import { Styles } from '../../../css/design';
 
 const CreatePasswordPage = ({ route }) => {
   const navigation = useNavigation();
-  const email = route.params?.email;
+  const [email, setEmail] = useState(route.params?.email || '');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [formSubmitted, setFormSubmitted] = useState(false);
@@ -25,6 +41,7 @@ const CreatePasswordPage = ({ route }) => {
   const [signup] = useSignupMutation();
   const { top: topInset } = useSafeAreaInsets();
   const [isConnected, setIsConnected] = useState(true);
+  const theme = useTheme();
 
   useEffect(() => {
     // Check internet connection
@@ -44,14 +61,17 @@ const CreatePasswordPage = ({ route }) => {
     setIsLoading(true);
     try {
       const userData = await login({ email, password });
+      navigation.navigate('register');
       dispatch(setCredentials({ ...userData, email }));
-      dispatch(userRegistered(true));
-      Alert.alert('Login Successful', 'You have successfully logged in! Please click on continue as we reset your page. Thank you!');
     } catch (error) {
       if (error.status === 'FETCH_ERROR') {
         Alert.alert('Network Error', 'Please check your internet connection.');
       } else {
-        Alert.alert('Login Failed', 'Please try logging in.');
+        Alert.alert(
+          'Error',
+          'Something went wrong. We will be redirecting you to our login page where you will have to login manually'
+        );
+        navigation.navigate('login');
       }
       console.log(error, 'o', email, password);
     }
@@ -62,14 +82,11 @@ const CreatePasswordPage = ({ route }) => {
     setIsLoading(true);
     try {
       const createUser = await signup({ email, password });
-      console.log(createUser)
-      //if sign up was successful
-      if ( createUser.data ) {
-        logUser()
-      }
-      else{
-        Alert.alert("Login Failed", "Something went wrong. We will be redirecting you to our login page where you will have to login manually")
-        navigation.navigate("login")
+      console.log(createUser);
+      if (createUser.data) {
+        logUser();
+      } else {
+        // Handle signup failure
       }
     } catch (error) {
       if (error.status === 'FETCH_ERROR') {
@@ -82,33 +99,45 @@ const CreatePasswordPage = ({ route }) => {
     setIsLoading(false);
   };
 
+  const validateEmail = (email) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+
   const handleCreatePassword = async () => {
+    navigation.navigate('register', { email, password });
+    if (!isConnected) {
+      Alert.alert('No Internet Connection', 'Please check your internet connection.');
+      return;
+    }
+
+    if (email.trim() === '') {
+      Alert.alert('Invalid Email', 'Email is required.');
+      return;
+    }
+
+    if (!validateEmail(email)) {
+      Alert.alert('Invalid Email', 'Please enter a valid email address.');
+      return;
+    }
+
     if (password.trim() === '' || confirmPassword.trim() === '') {
       setFormSubmitted(true);
       setIsPasswordMatched(true);
       return;
     }
 
-    if (password.length < 8) {
+    if (password.length < 8 || password !== confirmPassword) {
       setIsPasswordMatched(false);
       return;
     }
 
-    if (password !== confirmPassword) {
-      setIsPasswordMatched(false);
+    if (email.includes(password)) {
+      Alert.alert('Invalid Password', 'Password cannot be the same as the email.');
       return;
     }
 
-    // Perform password creation logic
-    setIsPasswordMatched(true); // Passwords match
-
-    // log user in and show the profile page as for registration account
-    if (!isConnected) {
-      Alert.alert('No Internet Connection', 'Please check your internet connection.');
-      return;
-    }
-
-    await signupUser();
+    setIsPasswordMatched(true);
+    navigation.navigate('register', { email, password });
   };
 
   const togglePasswordVisibility = () => {
@@ -121,23 +150,28 @@ const CreatePasswordPage = ({ route }) => {
 
   return (
     <SafeAreaProvider>
-      <Appbar.Header>
-        <Appbar.BackAction onPress={() => navigation.goBack()} />
-        <Appbar.Content title="Create Password" />
+      {/* App header */}
+      <Appbar.Header style={{ backgroundColor: theme.colors.appbar }}>
+        <Appbar.BackAction onPress={() => navigation.goBack()} color={theme.colors.color} />
+        <Appbar.Content title="Create Password" titleStyle={{ color: theme.colors.color }} />
       </Appbar.Header>
-      <SafeAreaView style={styles.safeAreaContainer}>
-        <CustomAlert visible={isLoading} message="Loading..." />
+
+      <SafeAreaView style={{ backgroundColor: theme.colors.background, flex: 1 }}>
         <ScrollView contentContainerStyle={[styles.container, { paddingTop: topInset }]}>
           <View>
-            <KeyboardAvoidingView style={{ width: 260, margin: 20 }}>
+            <KeyboardAvoidingView style={[Styles.m2, Styles.w3]}>
+              {/* Password input */}
               <TextInput
                 label="Password"
                 mode="outlined"
                 placeholder="Enter Password"
+                outlineColor={MD2Colors.green500}
+                selectionColor={MD2Colors.green700}
+                textColor={theme.colors.color}
+                style={[Styles.mb2]}
                 secureTextEntry={!isPasswordVisible}
                 value={password}
                 onChangeText={setPassword}
-                style={styles.input}
                 right={
                   <TextInput.Icon
                     icon={isPasswordVisible ? 'eye-off' : 'eye'}
@@ -145,14 +179,19 @@ const CreatePasswordPage = ({ route }) => {
                   />
                 }
               />
+
+              {/* Confirm Password input */}
               <TextInput
                 label="Confirm Password"
                 mode="outlined"
+                outlineColor={MD2Colors.green500}
+                selectionColor={MD2Colors.green700}
+                textColor={theme.colors.color}
+                style={[Styles.mb2]}
                 placeholder="Confirm Password"
                 secureTextEntry={!isConfirmPasswordVisible}
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
-                style={styles.input}
                 right={
                   <TextInput.Icon
                     icon={isConfirmPasswordVisible ? 'eye-off' : 'eye'}
@@ -160,6 +199,8 @@ const CreatePasswordPage = ({ route }) => {
                   />
                 }
               />
+
+              {/* Password validation errors */}
               {formSubmitted && (password.trim() === '' || confirmPassword.trim() === '') && (
                 <HelperText type="error" visible={true}>
                   Password is required
@@ -172,19 +213,24 @@ const CreatePasswordPage = ({ route }) => {
               )}
             </KeyboardAvoidingView>
           </View>
+
           <View style={styles.container}>
+            {/* Next button */}
             <Button
+              loading={isLoading}
               mode="contained"
-              style={styles.button}
+              color={theme.colors.green700}
               onPress={handleCreatePassword}
               disabled={!isConnected || password.trim() === ''}
             >
-              Create
+              Next
             </Button>
           </View>
         </ScrollView>
+
+        {/* Internet connection snackbar */}
         {!isConnected && (
-          <Snackbar visible={!isConnected}>
+          <Snackbar visible={!isConnected} onDismiss={() => {}}>
             No internet connection. Please check your network settings.
           </Snackbar>
         )}
@@ -194,21 +240,9 @@ const CreatePasswordPage = ({ route }) => {
 };
 
 const styles = StyleSheet.create({
-  safeAreaContainer: {
-    flex: 1,
-    backgroundColor: '#eeeeee',
-  },
   container: {
     justifyContent: 'center',
-    alignSelf: 'center',
-  },
-  input: {
-    marginBottom: 16,
-  },
-  button: {
-    width: 200,
-    alignSelf: 'center',
-    marginTop: 16,
+    alignItems: 'center',
   },
 });
 

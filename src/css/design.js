@@ -9,13 +9,25 @@ export const Styles = StyleSheet.create({
     m2: {
         margin: 20,
     },
+    mb2: {
+      marginBottom: 20,
+    },
     mh100: {
         height: "100%"
     },
     mw100: {
         width: "100%"
     },
-
+    w3: {
+      width: 310,
+    },
+    w2:{
+      width:220
+    },
+    container: {
+      justifyContent: 'center',
+      alignSelf: 'center',
+    },
     defaultGradient: {
         backgroundColor: 'rgba(0, 0, 0, 0.6)',
         ...StyleSheet.absoluteFillObject,
@@ -29,13 +41,6 @@ export const Styles = StyleSheet.create({
       marginBottom: 16,
       width: "90%"
     },
-    //General
-    container: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    //End of General
 
     //Splash Page Section
     splashContainer: {

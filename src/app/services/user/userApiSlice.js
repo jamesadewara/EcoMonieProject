@@ -4,7 +4,7 @@ export const userApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     getUser: builder.query({
       query: ({ accessToken }) => ({
-        url: '/auth/account/info/',
+        url: '/auth/users/me/',
         headers: {
           Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
@@ -14,14 +14,14 @@ export const userApi = apiSlice.injectEndpoints({
     }),
     
     updateUser: builder.mutation({
-      query: ({ accessToken, username, about, contact_no, location, address, bank_account_no }) => ({
-        url: '/auth/account/update/',
+      query: ({ accessToken, username, avatar, about, contact_no, location, address, bank_account_no }) => ({
+        url: `/auth/account/update/`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
-        method: 'POST',
-        body: { username, about, contact_no, location, address, bank_account_no },
+        method: 'PUT',
+        body: { username, avatar, about, contact_no, location, address, bank_account_no },
       }),
     }),
   }),

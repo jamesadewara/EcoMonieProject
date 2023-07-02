@@ -19,7 +19,6 @@ export const launchSlice = createSlice({
     clearState: (state) => {
       return {
         intro: false,
-        register: false,
       };
     },
   },
@@ -27,8 +26,6 @@ export const launchSlice = createSlice({
 
 // Action creators are generated for each case reducer function
 export const { authValid, userRegistered, clearState } = launchSlice.actions;
-
-export const isfirstTimer = (state) => state.launch.register;
 
 export default launchSlice.reducer;
 

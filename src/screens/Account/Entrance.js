@@ -1,27 +1,19 @@
 // import necessary dependencies and modules
 import React, { useContext } from 'react';
-
-import { View, ImageBackground } from 'react-native';
-
+import { View, ImageBackground, StatusBar } from 'react-native';
 import { Text, Button, MD2Colors } from 'react-native-paper';
-
-
 import { LinearGradient } from 'expo-linear-gradient';
-
 import { useNavigation } from '@react-navigation/native';
-
-
 import { Styles } from '../../css/design';
-
 import { useSelector } from "react-redux"
 import { selectCurrentToken, selectCurrentUser } from "../../app/actions/authSlice"
 
+// Define thumbnail images
 const Thumbnail = {
   intro_wallpaper: require('../../../assets/img/wallpaper/entrance.jpeg'),
 };
 
 export default function IntroPage() {
-
   const navigation = useNavigation();
 
   return (
@@ -30,6 +22,11 @@ export default function IntroPage() {
         colors={['rgba(0, 0, 0, 0.7)', 'rgba(0, 0, 0, 0.5)']}
         style={[Styles.defaultGradient, {opacity: 0.45}]}
       />
+      <StatusBar
+        barStyle="light-content" // Use light text color for status bar
+        backgroundColor="transparent" // Set status bar background color to transparent
+        translucent // Make the status bar translucent
+      />
       <View style={Styles.container}>
         <View style={{ flex: 3, padding: 15, }}>
           <Text variant='displaySmall' style={{color: "white", textAlign: "center", top: "45%" }}>
@@ -37,7 +34,6 @@ export default function IntroPage() {
           </Text>
         </View>
 
-          
         <View style={{ marginBottom: 90, alignItems: "center" }}>
           <Button mode='contained' style={{width: 260}} buttonColor={MD2Colors.green900} onPress={() => navigation.navigate('login')}>
             Login

@@ -4,7 +4,7 @@ export const emailVerifyApiSlice = apiSlice.injectEndpoints({
     endpoints: builder => ({
         verifyemail: builder.mutation({
             query: ({ email }) => ({
-                url: '/auth/verify/email/',
+                url: '/auth/users/activation/',
                 method: 'POST',
                 body: { email }
             })

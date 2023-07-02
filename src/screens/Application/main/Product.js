@@ -1,191 +1,118 @@
-import React, { useEffect } from 'react';
-import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet, Dimensions } from 'react-native';
-import { Appbar, FAB, Button } from 'react-native-paper';
+import React, { useEffect,useState} from 'react';
+import {
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  ScrollView,
+  StyleSheet,
+  Dimensions,
+} from 'react-native';
+import { Appbar, FAB, Button, useTheme } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useGetProductsQuery } from '../../../app/services/features/productServerApi';
-import { useGetUserQuery } from '../../../app/services/user/userApiSlice';
 import { useGetSettingsQuery } from '../../../app/services/features/settingsServerApi';
+import { useGetUserQuery } from '../../../app/services/user/userApiSlice';
+import CustomAlert from '../../../widgets/customAlert';
 import { useSelector } from 'react-redux';
 import { selectCurrentToken } from '../../../app/actions/authSlice';
-import CustomAlert from '../../../widgets/customAlert';
+import ErrorPage from '../../../Components/ErrorPage';
+import { ProductList } from '../../../Components/ProductCard';
 
-
-const Thumbnail = {
-  noNetwork: require('../../../../assets/img/anime/noInternet.gif'),
-  icon: require('../../../../assets/icon.png')
-};
-
-const windowWidth = Dimensions.get('window').width;
-
-const ProductCard = ({ onPress, source, name, price, description, date, width }) => {
-  const currentDateTime = new Date();
-  const djangoDate = new Date(date);
-  const isNew = djangoDate > currentDateTime;
-
-  return (
-    <TouchableOpacity
-      onPress={onPress}
-      style={{
-        marginTop: 30,
-        backgroundColor: '#FFF',
-        height: 210,
-        width: width,
-        elevation: 2,
-        borderRadius: 10,
-        padding: 15,
-        marginRight: 5,
-      }}
-    >
-      <Image
-        source={source}
-        style={{
-          width: '100%',
-          height: 70,
-          borderRadius: 10
-        }}
-      />
-      <View style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginVertical: 10
-      }}>
-        <Text style={{
-          fontWeight: 'bold',
-          color: '#4f4a4a',
-          fontSize: 12
-        }} numberOfLines={1} ellipsizeMode='tail'>
-          {name}
-        </Text>
-        <View style={{
-          height: 4,
-          width: 4,
-          borderRadius: 4,
-          backgroundColor: 'red',
-          marginHorizontal: 4
-        }} />
-      </View>
-      {isNew && (
-        <Text style={{
-          color: 'red',
-          fontSize: 9,
-          fontWeight: 'bold'
-        }}>
-          New
-        </Text>
-      )}
-      <Text style={{
-        fontSize: 9,
-        color: '#4f4a4a',
-        fontWeight: 'normal',
-      }} numberOfLines={3} ellipsizeMode='tail'>
-        {description}
-      </Text>
-      <View style={{
-        flexDirection: 'row',
-        marginTop: 5,
-        alignItems: 'center',
-        width: '100%'
-      }}>
-        <View style={{
-          width: '80%'
-        }}>
-          <Text style={{
-            fontSize: 15,
-            fontWeight: 'bold'
-          }}>{price} NGN</Text>
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
-};
 
 const ProductPage = () => {
   const navigation = useNavigation();
   const accessToken = useSelector(selectCurrentToken);
+  const theme = useTheme();
 
-  const { data: products, isLoading, isError, error, refetch } = useGetProductsQuery({ accessToken });
-  const { data: userInfo, isLoadingUser, isErrorUser, refetch: userRefetch } = useGetUserQuery({ accessToken });
-  // fetch settings data
-  console.log(userInfo)
+  // Query for getting products
+  const {
+    data: products,
+    isLoading,
+    isError,
+    error,
+    refetch: productsRefetch,
+  } = useGetProductsQuery({ accessToken });
+
+  // Query for getting user info
+  const {
+    data: userInfo = [],
+    isLoadingUser,
+    isErrorUser,
+    refetch: userRefetch,
+  } = useGetUserQuery({ accessToken });
+
+  // Query for getting settings
   const {
     data: settings = [],
     isLoadingSettings,
     refetch: settingsRefetch,
   } = useGetSettingsQuery({ accessToken });
 
+  const [refreshing, setRefreshing] = useState(false);
+
   useEffect(() => {
+    // Fetch user, settings, and products data on component mount
     userRefetch();
     settingsRefetch();
-    refetch();
+    productsRefetch();
   }, []);
 
   const handleRefresh = () => {
-    refetch();
+    setRefreshing(true);
+    // Refresh the products data
+    productsRefetch();
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 1000);
   };
 
   const renderView = () => {
     if (isError) {
-      return (
-        <SafeAreaProvider>
-          <SafeAreaView style={{ flex: 1, backgroundColor: 'green' }}>
-            <LinearGradient colors={['rgba(0, 0, 0, 0.7)', 'rgba(0, 0, 0, 0.9)']} style={styles.defaultGradient} />
-            <View style={styles.noConnectionContainer}>
-              <Text style={{ color: 'green', fontSize: 25, fontWeight: 'bold', marginBottom: 15 }}>
-                NO NETWORK CONNECTION
-              </Text>
-              <Image source={Thumbnail.noNetwork} style={{ width: 150, height: 150 }} />
-              <View>
-                <Button style={{ backgroundColor: 'green' }} onPress={handleRefresh} mode="contained">
-                  Reload
-                </Button>
-              </View>
-            </View>
-          </SafeAreaView>
-        </SafeAreaProvider>
-      );
+      return <ErrorPage handleRefresh={handleRefresh} />;
     }
 
-    return (
-      <View>
-        {isLoading && (
-          <CustomAlert visible={isLoading} message="Loading..." />
-        )}
-        <ScrollView  showsVerticalScrollIndicator={false}>
-          <View style={[styles.container, {}]}>
-            {products?.map((data) => (
-              <ProductCard
-                key={data.id}
-                width={windowWidth / 2.2}
-                source={{ uri: data.image[0].img }}
-                name={data.name}
-                description={data.description}
-                price={data.price}
-                onPress={() => navigation.navigate('product_info', { data, settings, userInfo })}
-              />
-            ))}
-          </View>
-        </ScrollView>
-      </View>
-    );
+    if (isLoading || isLoadingUser || isLoadingSettings) {
+      return <CustomAlert visible={true} message="Loading..." />;
+    }
+
+    // Log the names of the products
+    products?.forEach((data) => {
+      console.log(data.name, 'Tests');
+    });
+
+    // Render the list of products
+    return <ProductList products={products} backgroundColor={theme.colors.cardsdiaogs} color={theme.colors.color} navigation={navigation} refreshing={refreshing} handleRefresh={handleRefresh} />;
   };
 
   return (
     <SafeAreaProvider>
-      <Appbar.Header>
-        <Appbar.Content title="Store" />
-        <Appbar.Action icon="magnify" onPress={() => navigation.navigate('search')} />
+      {/* App bar */}
+      <Appbar.Header style={{ backgroundColor: theme.colors.appbar }}>
+        <Appbar.Content
+          title="Trash"
+          titleStyle={{ color: theme.colors.color }}
+        />
+        <Appbar.Action
+          icon="magnify"
+          iconColor={theme.colors.color}
+          onPress={() => navigation.navigate('search')}
+        />
       </Appbar.Header>
+      <SafeAreaView style={{ backgroundColor: theme.colors.background, flex: 1 }}>
+        {/* Render the view */}
+        {renderView()}
+      </SafeAreaView>
 
-      {renderView()}
-
-      {userInfo?.type_of_business === '2' && (
+      {/* Floating action button */}
+      {userInfo.type_of_business === '2' && (
         <FAB
           icon="plus"
           color="white"
           style={styles.fabStyle}
-          onPress={() => navigation.navigate('upload')}
+          onPress={() => navigation.navigate('upload', { productInfo: {} })}
         />
       )}
     </SafeAreaProvider>
@@ -209,15 +136,19 @@ const styles = StyleSheet.create({
     elevation: 8,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#00C853',
+    backgroundColor: '#1C8749',
   },
   defaultGradient: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    height: '100%',
   },
   noConnectionContainer: {
     flex: 1,
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 
