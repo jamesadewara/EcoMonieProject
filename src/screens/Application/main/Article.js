@@ -10,12 +10,12 @@ import {
   PanResponder,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { Styles } from '../../../css/design';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Button, MD2Colors, Appbar, useTheme } from "react-native-paper";
-import { BASE_URL } from "../../../config"
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { Button, Appbar, useTheme, MD2Colors } from "react-native-paper";
 import ErrorPage from '../../../Components/ErrorPage';
+import { BASE_URL } from '../../../config';
+import LoadingSkeleton from '../../../Components/LoadingSkeleton';
+
 
 const Thumbnail = {
   icon: require('../../../../assets/icon.png')
@@ -48,7 +48,7 @@ const ArticlePage = () => {
   // Reload the WebView
   const reloadWebView = () => {
     setIsError(false);
-    webViewRef.current.clearCache(true);
+    webViewRef.current.reload();
   };
 
   // Handle pull-to-refresh action
@@ -94,18 +94,19 @@ const ArticlePage = () => {
       return <ErrorPage handleRefresh={handleRefresh} />;
     }
 
+    if (isLoading) {
+      return (
+        <LoadingSkeleton isLoading={isLoading} />
+      );
+    }
+
+
     return (
       <View style={styles.webViewContainer}>
-        {isLoading && (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={MD2Colors.green400} />
-          </View>
-        )}
         <WebView
           ref={webViewRef}
-          source={{ uri: `${BASE_URL}/ecomonie/website/?theme=${theme.colors.mode ? 'dark' : 'light'}` }}
+          source={{ uri: `${BASE_URL}/ecomonie/website/` }}
           injectedJavaScript={injectedJavaScript}
-          onError={() => setIsError(true)}
           onLoadStart={() => setIsLoading(true)}
           onLoadEnd={() => setIsLoading(false)}
           onNavigationStateChange={(navState) => {
@@ -124,8 +125,8 @@ const ArticlePage = () => {
     <SafeAreaProvider>
       {/* Appbar */}
       <Appbar.Header style={{ backgroundColor: theme.colors.appbar }}>
-        <Appbar.Action icon={Thumbnail.icon} size={48} iconColor='green' />
-        <Appbar.Content title="EcoMonie" color='green' />
+        <Appbar.Action icon={Thumbnail.icon} size={48} iconColor={MD2Colors.green500} />
+        <Appbar.Content title="EcoMonie" titleStyle={{ color: theme.colors.color }} />
       </Appbar.Header>
       <ScrollView
         contentContainerStyle={styles.scrollViewContent}

@@ -1,33 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import {
-  SafeAreaView,
-  Text,
-  ScrollView,
-  StyleSheet,
-  View,
-  KeyboardAvoidingView,
-  Alert,
-  StatusBar,
-} from 'react-native';
-import {
-  Button,
-  Appbar,
-  TextInput,
-  HelperText,
-  MD2Colors,
-  Snackbar,
-  useTheme,
-} from 'react-native-paper';
+import { SafeAreaView, Text, ScrollView, StyleSheet, View, KeyboardAvoidingView, Alert, StatusBar } from 'react-native';
+import { Button, Appbar, TextInput, HelperText, MD2Colors, useTheme } from 'react-native-paper';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import NetInfo from '@react-native-community/netinfo';
-import { useVerifyemailMutation } from '../../../app/services/registration/emailVerifyApiSlice';
-import { useCodeverifyMutation } from '../../../app/services/registration/codeVerifyApiSlice';
 import { Styles } from '../../../css/design';
+import ImageDialog from '../../../Components/MessageDialog';
+import { useCodeverifyMutation } from '../../../app/services/registration/codeVerifyApiSlice';
+import { useVerifyemailMutation } from '../../../app/services/registration/emailVerifyApiSlice';
+
 
 const CodeVerificationPage = ({ route }) => {
   const navigation = useNavigation();
-  const email = route.params?.email;
+  const { email } = route.params || '';
   const [verificationCode, setVerificationCode] = useState('');
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [isConnected, setIsConnected] = useState(true);
@@ -36,18 +21,20 @@ const CodeVerificationPage = ({ route }) => {
   const [codeverify] = useCodeverifyMutation();
   const [isLoading, setIsLoading] = useState(false);
   const [isResendLoading, setIsResendLoading] = useState(false);
-  const [isResendSuccessfull, setIsResendSuccessfull] = useState(false);
+  const [isResendSuccessful, setIsResendSuccessful] = useState(false);
+  const [showImageDialog, setShowImageDialog] = useState(false);
+  const [dialogTitle, setDialogTitle] = useState('');
+  const [dialogMessage, setDialogMessage] = useState('');
+  const [dialogStatus, setDialogStatus] = useState('');
 
-  const theme = useTheme(); // Access the current theme from react-native-paper
+  const theme = useTheme();
 
   useEffect(() => {
-    // Subscribe to network connectivity changes
     const unsubscribe = NetInfo.addEventListener((state) => {
       setIsConnected(state.isConnected);
     });
 
     return () => {
-      // Clean up the subscription when the component unmounts
       unsubscribe();
     };
   }, []);
@@ -55,54 +42,66 @@ const CodeVerificationPage = ({ route }) => {
   const verifyUserEmail = async () => {
     setIsResendLoading(true);
     try {
-      await verifyemail({ email });
-      // If the email was resent successfully, show the text for email was resent
-      setIsResendSuccessfull(true);
-      Alert.alert(
-        'Resent Successfull',
-        'We have resent your verification code, you will receive it through your email shortly.'
-      );
+      const response = await verifyemail({email});
+      if (response.data.success) {
+        // Handle the success case
+        setDialogTitle('Resent Successful')
+        setDialogMessage('We have resent your verification code. You will receive it through your email shortly.')
+        setDialogStatus('email')
+        setShowImageDialog(true);
+      }
+      else{
+        navigation.navigate("verify_email")
+      }
+      console.log(response)
+      
     } catch (error) {
-      Alert.alert(
-        'Error',
+      // Handle the error case
+      setDialogTitle('Error');
+      setDialogMessage(
         'An error occurred, please recheck your email and try again later. Thank you.'
       );
+      setDialogStatus('error');
+      setShowImageDialog(true);
     }
     setIsResendLoading(false);
   };
 
   const verifyUserCode = async () => {
-    navigation.navigate('create_password', { email: email });
+    
     setIsLoading(true);
-    const verification_code = verificationCode;
+    const code = verificationCode;
     try {
-      const requestCode = await codeverify({ email, verification_code });
-      try {
-        if (requestCode.data.success) {
-          // If the code is equal, go to the create password page
-          navigation.replace('create_account', { email: email });
-        }
-      } catch {
-        if (!requestCode.error.data.success) {
-          Alert.alert(
-            'Mismatched',
-            'The code is not the same, please recheck your email and verify the code again.'
-          );
-        }
+      const requestCode = await codeverify({ email, code });
+   
+      console.log(requestCode)
+      if (requestCode.data.success) {
+        navigation.replace('create_account', { email });
+      } else {
+        setDialogTitle('Mismatched')
+        setDialogMessage('The code is not the same. Please recheck your email and verify the code again.')
+        setDialogStatus('error')
+        setShowImageDialog(true);
       }
     } catch (error) {
       console.log('error opo', error);
-      Alert.alert(
-        'Error',
-        'An error occurred, please recheck your email and try again later. Thank you.'
-      );
+      setIsResendSuccessful(true);
+      setDialogTitle('Error')
+      setDialogMessage('An error occurred. Please recheck your email and try again later. Thank you.')
+      setDialogStatus('error')
+      setShowImageDialog(true);
     }
     setIsLoading(false);
   };
 
   const handleCodeVerification = async () => {
     if (!isConnected) {
-      Alert.alert('No Internet Connection', 'Please check your internet connection and try again.');
+      Alert.alert('', '');
+      setIsResendSuccessful(true);
+      setDialogTitle('No Internet Connection')
+      setDialogMessage('Please check your internet connection and try again.')
+      setDialogStatus('nointernet')
+      setShowImageDialog(true);
       return;
     }
 
@@ -112,10 +111,12 @@ const CodeVerificationPage = ({ route }) => {
     }
 
     verifyUserCode();
+    
   };
 
   return (
     <SafeAreaProvider>
+      <StatusBar barStyle={theme.colors.status} />
       <Appbar.Header style={{ backgroundColor: theme.colors.appbar }}>
         <Appbar.BackAction onPress={() => navigation.goBack()} color={theme.colors.color} />
         <Appbar.Content title="VerifyCode" titleStyle={{ color: theme.colors.color }} />
@@ -158,10 +159,10 @@ const CodeVerificationPage = ({ route }) => {
           </View>
           <View style={{ marginVertical: 30, padding: 10 }}>
             <Text style={{ color: theme.colors.color }}>
-              We have sent a verification code to this email {email}
+              We have sent a verification code to this email: {email}
             </Text>
             <Text style={{ color: theme.colors.color }}>
-              Did not receive the verification code? Try clicking on Resend Code
+              Did not receive the verification code? Try clicking on Resend Code.
             </Text>
           </View>
           <View style={styles.container}>
@@ -177,11 +178,7 @@ const CodeVerificationPage = ({ route }) => {
           </View>
         </ScrollView>
       </SafeAreaView>
-      {!isConnected && (
-        <Snackbar visible={!isConnected} onDismiss={() => {}}>
-          No internet connection
-        </Snackbar>
-      )}
+      <ImageDialog status={dialogStatus} title={dialogTitle} message={dialogMessage} backgroundColor={theme.colors.cardsdialogs} color={theme.colors.color} visible={showImageDialog} onDismiss={() => setShowImageDialog(false)} />
     </SafeAreaProvider>
   );
 };

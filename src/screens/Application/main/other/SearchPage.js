@@ -8,9 +8,9 @@ import { useGetProductsQuery } from '../../../../app/services/features/productSe
 import { useGetCategoryQuery } from '../../../../app/services/features/productsCategoryServerApi';
 import { selectCurrentToken } from '../../../../app/actions/authSlice';
 import { useSelector } from 'react-redux';
-import { useGetUserQuery } from '../../../../app/services/user/userApiSlice';
 import { useGetSettingsQuery } from '../../../../app/services/features/settingsServerApi';
 import { ProductList, CategoryList } from '../../../../Components/ProductCard'; // Assuming ProductList and CategoryList are exported from the mentioned path
+import { useGetUserQuery } from '../../../../app/services/registration/signupApiSlice';
 
 // Sample data for category and product
 const categoryData = [
@@ -96,14 +96,14 @@ const SearchPage = () => {
 
   // Render no results found message
   const renderNoResultsFound = () => (
-    <Text style={{ textAlign: 'center', margin: 30 }}>
+    <Text style={{ textAlign: 'center', margin: 30,color:theme.colors.color }}>
       No results found
     </Text>
   );
 
   // Render results count
   const renderResultsCount = () => (
-    <Text style={{ margin: 10 }}>
+    <Text style={{ margin: 10,color:theme.colors.color  }}>
       Result(s) found: {filteredProducts.length}
     </Text>
   );

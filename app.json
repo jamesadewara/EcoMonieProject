@@ -3,46 +3,24 @@
     "name": "EcoMonie",
     "slug": "EcoMonie",
     "version": "1.0.0",
-    "orientation": "default",
+    "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "splash": {
+      "image": ""
+    },
     "assetBundlePatterns": [
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true,
-      "permissions": {
-        "allowSystemDND": true,
-        "allowBluetooth": true,
-        "allowCamera": true,
-        "allowMicrophone": true,
-        "allowLocation": true,
-        "allowMotion": true,
-        "allowNotifications": true,
-        "allowBackgroundRefresh": true,
-        "allowMusic": true,
-        "allowPhotos": true
-      }
+      "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#fafafa"
       },
-      "permissions": [
-        "CAMERA",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE"
-      ],
-      "statusBar": {
-        "backgroundColor": "#ffffff"
-      },
-      "package": "com.aiguy.EcoMonie",
-      "config": {
-        "engine": {
-          "enableHermes": true
-        }
-      }
+      "package": "com.aiguy.EcoMonie"
     },
     "web": {
       "favicon": "./assets/favicon.png"

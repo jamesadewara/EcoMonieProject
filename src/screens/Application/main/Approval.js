@@ -2,13 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { SafeAreaView, View } from 'react-native';
 import { Appbar, useTheme } from 'react-native-paper';
 import { useSelector } from 'react-redux';
-import CustomAlert from '../../../widgets/customAlert';
+import CustomAlert from "../../../Components/CustomAlert";
 import ErrorPage from '../../../Components/ErrorPage';
 import ChatList from '../../../Components/ChatList';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { selectCurrentToken } from '../../../app/actions/authSlice';
 import { useGetPartnersQuery } from '../../../app/services/features/partnersApiServer';
-import { useGetUserQuery } from '../../../app/services/user/userApiSlice';
+import { useGetUserQuery } from '../../../app/services/registration/signupApiSlice';
+// import { useGetProfileQuery } from '../../../app/services/features/usersProfileApi';
+
 
 const partners = [
   {
@@ -33,25 +35,30 @@ const ApprovalPage = () => {
   //   isLoading,
   //   isError,
   //   refetch,
-  // } = useGetPartnersQuery({ accessToken, id: 1 });
+  // } = useGetProfileQuery({ accessToken});
 
   // console.log(userInfo,"userinfostardoy",partners)
 
   const renderView = () => {
-    if (isErrorUser) {
-      return <ErrorPage handleRefresh={handleRefresh} />;
+    // if (isErrorUser) {
+    //   return <ErrorPage handleRefresh={handleRefresh} />;
+    // }
+    if (isLoadingUser) {
+      return (
+        <LoadingSkeleton isLoading={true} />
+      );
     }
 
     return (
       <View>
-        {isLoadingUser && <CustomAlert visible={true} message="Loading..." />}
-        {!isLoadingUser && (
+      {/* //   {isLoadingUser && <CustomAlert visible={true} message="Loading..." />}
+      //   {!isLoadingUser && ( */}
           <ChatList
             partners={partners}
             backgroundColor={theme.colors.cardsdiaogs}
             color={theme.colors.color}
           />
-        )}
+        {/* //)} */}
       </View>
     );
   };

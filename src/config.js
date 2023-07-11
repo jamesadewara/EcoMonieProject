@@ -2,7 +2,7 @@ import { useSelector } from 'react-redux';
 import * as FileSystem from 'expo-file-system';
 
 // Define the base URL
-export const BASE_URL = "http://192.168.118.146:9000"; //"https://teenssdgclimatechangeapp.pythonanywhere.com";
+export const BASE_URL = "http://192.168.155.146:8000"; //"https://teenssdgclimatechangeapp.pythonanywhere.com";
 
 // Function to check if the app has been launched before
 export const isLaunched = () => useSelector((state) => state.launch.intro);

@@ -1,7 +1,5 @@
 import { configureStore } from '@reduxjs/toolkit';
 
-import { jsonServerApi } from './services/jsonServerApi';
-
 import launchReducer from "./actions/launchSlice";
 import { apiSlice } from './api/apiSlice';
 import authReducer from './actions/authSlice';

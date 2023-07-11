@@ -1,26 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  Image,
-  StyleSheet,
-  ScrollView,
-  Alert,
-} from 'react-native';
-import {
-  Button,
-  Appbar,
-  MD2Colors,
-  Snackbar,
-  useTheme,
-} from 'react-native-paper';
+import { View, Text, Image, StyleSheet, ScrollView, Alert } from 'react-native';
+import { Button, Appbar, MD2Colors, useTheme } from 'react-native-paper';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import Swiper from 'react-native-swiper';
 import { useNavigation } from '@react-navigation/native';
 import { selectCurrentToken } from '../../../../app/actions/authSlice';
 import { useSelector } from 'react-redux';
 import { useDeleteProductMutation } from '../../../../app/services/features/productServerApi';
-import CustomAlert from '../../../../widgets/customAlert';
+import NetInfo from '@react-native-community/netinfo';
+import CustomAvatar from '../../../../Components/CustomAvatar';
+import CustomAlert from '../../../../Components/CustomAlert';
+
+
 
 const SwiperComponent = ({ imgs }) => {
   return (
@@ -45,10 +36,7 @@ const SwiperComponent = ({ imgs }) => {
     >
       {imgs?.map((data) => (
         <View style={styles.slide} key={data.id}>
-          <Image
-            source={{ uri: data.img }}
-            style={{ height: 300, width: 300 }}
-          />
+          <Image source={{ uri: data.img }} style={{ height: 300, width: 300 }} />
         </View>
       ))}
     </Swiper>
@@ -62,21 +50,18 @@ const ProductInfoPage = ({ route }) => {
   const [deleteProduct] = useDeleteProductMutation();
   const [isLoading, setIsLoading] = useState(false);
   const [isConnected, setIsConnected] = useState(true);
-  const [snackbarVisible, setSnackbarVisible] = useState(false);
   const theme = useTheme();
+  console.log(userInfo, 'typebusiness');
 
   // Check internet connection on component mount
   useEffect(() => {
-    const checkInternetConnection = async () => {
-      try {
-        const response = await fetch('https://google.com'); // Replace with an actual API endpoint
-        setIsConnected(response.ok);
-      } catch (error) {
-        setIsConnected(false);
-      }
-    };
+    const unsubscribe = NetInfo.addEventListener((state) => {
+      setIsConnected(state.isConnected);
+    });
 
-    checkInternetConnection();
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   const handleDeleteTrash = () => {
@@ -113,6 +98,14 @@ const ProductInfoPage = ({ route }) => {
     );
   };
 
+  const showAlert = () => {
+    Alert.alert(
+      'No Internet Connection',
+      'Please check your internet connection and try again.',
+      [{ text: 'OK' }]
+    );
+  };
+
   return (
     <SafeAreaProvider>
       <Appbar.Header style={{ backgroundColor: theme.colors.appbar }}>
@@ -124,6 +117,8 @@ const ProductInfoPage = ({ route }) => {
           title="Trash Detail's"
           titleStyle={{ color: theme.colors.color }}
         />
+        {/* Custom Avatar */}
+        <Appbar.Action icon={<CustomAvatar  avatar={userInfo.profile_picture} email={userInfo?.email}/>} />
       </Appbar.Header>
       <SafeAreaView
         style={[styles.safeArea, { backgroundColor: theme.colors.background }]}
@@ -139,9 +134,7 @@ const ProductInfoPage = ({ route }) => {
             {/* Product Information */}
             <View style={styles.infoContainer}>
               <View style={styles.infoHeader}>
-                <Text
-                  style={[styles.infoTitle, { color: theme.colors.color }]}
-                >
+                <Text style={[styles.infoTitle, { color: theme.colors.color }]}>
                   {productInfo.name}
                 </Text>
               </View>
@@ -167,25 +160,23 @@ const ProductInfoPage = ({ route }) => {
                         icon="delete"
                         color={MD2Colors.red300}
                         style={styles.button}
-                        onPress={() => handleDeleteTrash()}
+                        onPress={isConnected ? () => handleDeleteTrash() : showAlert}
                         disabled={!isConnected}
                       >
                         Delete
                       </Button>
 
                       {/* Update Button */}
-                      <Button
+                      {/* <Button
                         mode="contained"
                         icon="upload"
                         color={MD2Colors.blue500}
                         style={styles.button}
-                        onPress={() =>
-                          navigation.navigate('upload', { productInfo })
-                        }
+                        onPress={isConnected ? () => navigation.navigate('upload', { productInfo }) : showAlert}
                         disabled={!isConnected}
                       >
                         Update
-                      </Button>
+                      </Button> */}
                     </>
                   ) : (
                     // Make A Request Button
@@ -193,26 +184,26 @@ const ProductInfoPage = ({ route }) => {
                       mode="contained"
                       color="#4caf50"
                       style={styles.button}
-                      onPress={() => console.log('makingyourrequest')}
+                      onPress={isConnected ? () => console.log('makingyourrequest') : showAlert}
                       disabled={!isConnected}
                     >
                       Make A Request
                     </Button>
                   )
-                ) : null}
+                ) : 
+                <Button
+                      mode="contained"
+                      buttonColor={MD2Colors.grey500}
+                      style={styles.button}
+                      loading={true}
+                    >
+                      On Sale
+                    </Button>}
               </View>
             </View>
           </View>
         </ScrollView>
       </SafeAreaView>
-      {/* Snackbar for internet connection */}
-      <Snackbar
-        visible={!isConnected && snackbarVisible}
-        onDismiss={() => setSnackbarVisible(false)}
-        duration={Snackbar.DURATION_SHORT}
-      >
-        No internet connection
-      </Snackbar>
     </SafeAreaProvider>
   );
 };

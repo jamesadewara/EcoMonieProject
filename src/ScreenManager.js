@@ -1,41 +1,54 @@
 import React, { useEffect, useState } from "react";
-import { View } from "react-native";
+import { StatusBar } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
-import { Snackbar } from "react-native-paper";
+import { Snackbar, DefaultTheme, DarkTheme, Provider as PaperProvider } from "react-native-paper";
 import NetInfo from "@react-native-community/netinfo";
-import { useSelector } from "react-redux";
-import * as Font from 'expo-font';
-import { DefaultTheme, DarkTheme, Provider as PaperProvider } from 'react-native-paper';
-import { StatusBar } from 'react-native';
-
-import { isLaunched } from "./config";
-import { selectCurrentToken } from "./app/actions/authSlice";
+import { useSelector, useDispatch } from "react-redux";
+import { retrieveTokenFromSecureStore, setToken, selectCurrentToken } from "./app/actions/authSlice";
 import { selectCurrentTheme } from "./app/actions/themeSlice";
+import * as Font from 'expo-font';
 
+// Import Navigation stacks
 import LaunchStack from "./Navigation/LaunchStack";
 import AuthStack from "./Navigation/AuthStack";
 import AppStack from "./Navigation/AppStack";
 
 const ScreenManager = () => {
+  // Using Redux selectors to access state values
   const launch = useSelector((state) => state.launch.intro);
+  const accessToken = useSelector(selectCurrentToken);
+  const isDarkMode = useSelector(selectCurrentTheme);
+
+  // State variables
   const [isConnected, setIsConnected] = useState(true);
   const [snackbarVisible, setSnackbarVisible] = useState(false);
-  const token = useSelector(selectCurrentToken);
-  const isDarkMode = useSelector(selectCurrentTheme);
-  console.log(isDarkMode)
+
+  const dispatch = useDispatch();
 
   useEffect(() => {
+    retrieveTokenFromSecureStore()
+      .then((token) => {
+        if (token){
+          console.log(token)
+          dispatch(setToken(token));
+        }
+ 
+      })
+      .catch((error) => {
+        console.error("Error retrieving token:", error);
+        // Handle the error appropriately (e.g., show an error message)
+      });
+  }, [dispatch]);
+
+  useEffect(() => {
+    // Function to load required fonts
     const loadFonts = async () => {
       await Font.loadAsync({
         MaterialCommunityIcons: require('@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/MaterialCommunityIcons.ttf'),
       });
     };
 
-    const verifyFonts = async () => {
-      const availableFonts = await Font.loadAsync({});
-      console.log(availableFonts);
-    };
-
+    // Event listener for network connectivity changes
     const unsubscribe = NetInfo.addEventListener((state) => {
       setIsConnected(state.isConnected);
       if (!state.isConnected) {
@@ -43,14 +56,16 @@ const ScreenManager = () => {
       }
     });
 
+    // Loading fonts
     loadFonts();
-    verifyFonts();
 
+    // Cleanup function for the effect
     return () => {
       unsubscribe();
     };
   }, []);
 
+  // Custom theme based on selected theme mode
   const theme = {
     ...DefaultTheme,
     colors: {
@@ -58,33 +73,30 @@ const ScreenManager = () => {
       primary: 'green',
       background: isDarkMode ? '#121212' : '#eeeeee',
       appbar: isDarkMode ? '#1f1f1f' : '#F5F5F5',
-      cardsdiaogs: isDarkMode ? '#212121' : '#FAFAFA',
+      cardsdialogs: isDarkMode ? '#1a1a1a' : '#FAFAFA',
+      flatbuttondown: isDarkMode ? '#999999' : '#cccccc',
       color: isDarkMode ? '#ffffff' : '#1a1a1a',
-      disabled: '#777777',
+      mode: isDarkMode ? 'dark' : 'light',
+      status: isDarkMode ? 'light-content' : 'dark-content',
+      disabled: {
+        primary: isDarkMode ? '#5a5a5a' : '#777777',
+        // Add more disabled colors as needed
+      },
     },
     ...isDarkMode ? DarkTheme : {},
   };
 
   return (
     <PaperProvider theme={theme}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor="transparent"
-        translucent
-      />
+      <StatusBar barStyle={theme.colors.status} backgroundColor="transparent" translucent />
       <NavigationContainer>
-        {!launch ? <LaunchStack /> : token ? <AppStack /> : <AuthStack />}
+        {/* Rendering different stacks based on conditions */}
+        {!launch ? <LaunchStack /> : accessToken ? <AppStack /> : <AuthStack />}
       </NavigationContainer>
-      <Snackbar
-        visible={!isConnected && snackbarVisible}
-        onDismiss={() => setSnackbarVisible(false)}
-        duration={Snackbar.DURATION_SHORT}
-        action={{
-          label: 'Dismiss',
-          onPress: () => setSnackbarVisible(false),
-        }}
-      >
-        Network error. Please check your internet connection.
+
+      {/* Snackbar to display when there is no internet connection */}
+      <Snackbar visible={!isConnected} onDismiss={() => setSnackbarVisible(false)}>
+        No internet connection
       </Snackbar>
     </PaperProvider>
   );

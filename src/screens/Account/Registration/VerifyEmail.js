@@ -5,41 +5,43 @@ import {
   ScrollView,
   StyleSheet,
   View,
-  KeyboardAvoidingView,
-  Alert,
   StatusBar,
+  KeyboardAvoidingView,
+  Alert
 } from 'react-native';
 import {
   Button,
   Appbar,
   TextInput,
   HelperText,
-  Snackbar,
   useTheme,
   MD2Colors,
-  MD3Colors,
 } from 'react-native-paper';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import NetInfo from '@react-native-community/netinfo';
-import CustomAlert from '../../../widgets/customAlert';
-import { useVerifyemailMutation } from '../../../app/services/registration/emailVerifyApiSlice';
-import { Styles } from '../../../css/design';
 
-const Thumbnail = {
-  anime: require("../../../../assets/img/anime/question-1.png"),
-};
+// Custom Components
+import { Styles } from '../../../css/design';
+import CustomAlert from '../../../Components/CustomAlert';
+import ImageDialog from '../../../Components/MessageDialog';
+import { useVerifyemailMutation } from '../../../app/services/registration/emailVerifyApiSlice';
 
 const EmailVerificationPage = () => {
   const navigation = useNavigation();
+
   const [email, setEmail] = useState('');
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [isConnected, setIsConnected] = useState(true);
   const { top: topInset } = useSafeAreaInsets();
   const [isLoading, setIsLoading] = useState(false);
+  const [showImageDialog, setShowImageDialog] = useState(false);
+  const [dialogTitle, setDialogTitle] = useState('');
+  const [dialogMessage, setDialogMessage] = useState('');
+  const [dialogStatus, setDialogStatus] = useState('');
 
   const [verifyemail] = useVerifyemailMutation();
-  const theme = useTheme(); // Access the current theme from react-native-paper
+  const theme = useTheme();
 
   useEffect(() => {
     // Subscribe to network connectivity changes
@@ -55,46 +57,55 @@ const EmailVerificationPage = () => {
 
   const verifyUserEmail = async () => {
     setIsLoading(true);
-    navigation.replace("verify_code", { email: email });
     try {
-      const emailVerifier = await verifyemail({ email });
-
-      if (emailVerifier.error?.data?.error) {
-        Alert.alert(
-          "Verification Error",
-          "It seems like the user with this email already has an account. Please try with a different email."
-        );
-        navigation.replace("verify_code", { email: email });
+      const response = await verifyemail({email});
+      if (response.data.success) {
+        // Handle the success case
+        navigation.navigate('verify_code', { email: email });
       }
-
-      console.log(emailVerifier);
+      else{
+        setDialogTitle('Error');
+        setDialogMessage(
+          response.data.message
+        );
+        setDialogStatus('error');
+        setShowImageDialog(true);
+      }
+      console.log(response)
+      
     } catch (error) {
-      Alert.alert(
-        'Error',
+      // Handle the error case
+      setDialogTitle('Error');
+      setDialogMessage(
         'An error occurred, please recheck your email and try again later. Thank you.'
       );
+      setDialogStatus('error');
+      setShowImageDialog(true);
     }
-
     setIsLoading(false);
   };
 
   const handleEmailVerification = () => {
     if (!isConnected) {
-      Alert.alert('No Internet Connection', 'Please check your internet connection and try again.');
+      setDialogTitle('No Internet Connection');
+      setDialogMessage('Please check your internet connection and try again.');
+      setDialogStatus('nointernet');
+      setShowImageDialog(true);
       return;
     }
 
     if (email.trim() === '') {
-      Alert.alert('Invalid Email', 'Email is required.');
+      setFormSubmitted(true);
       return;
     }
 
     if (!validateEmail(email)) {
-      Alert.alert('Invalid Email', 'Please enter a valid email address.');
+      setFormSubmitted(true);
       return;
     }
 
-    verifyUserEmail();
+    verifyUserEmail()
+    
   };
 
   const validateEmail = (email) => {
@@ -104,12 +115,13 @@ const EmailVerificationPage = () => {
 
   return (
     <SafeAreaProvider>
-      <Appbar.Header style={{ backgroundColor: theme.colors.appbar }}>
-        <Appbar.BackAction onPress={() => navigation.goBack()} color={theme.colors.color} />
-        <Appbar.Content title="Verify Email" titleStyle={{ color: theme.colors.color }} />
-      </Appbar.Header>
+      <CustomAlert visible={isLoading} message="Verifying email" backgroundColor={theme.colors.cardsdialogs} color={theme.colors.color} />
+      <StatusBar barStyle={theme.colors.status} />
       <SafeAreaView style={{ backgroundColor: theme.colors.background, flex: 1 }}>
-        <CustomAlert visible={isLoading} message="Loading..." />
+        <Appbar.Header style={{ backgroundColor: theme.colors.appbar }}>
+          <Appbar.BackAction onPress={() => navigation.goBack()} color={theme.colors.color} />
+          <Appbar.Content title="Verify Email" titleStyle={{ color: theme.colors.color }} />
+        </Appbar.Header>
         <ScrollView contentContainerStyle={[styles.container, { paddingTop: topInset }]}>
           <View style={{ alignSelf: 'center', alignItems: 'center' }}>
             <View>
@@ -117,7 +129,7 @@ const EmailVerificationPage = () => {
                 <TextInput
                   label="Email"
                   mode="outlined"
-                  outlineColor={MD2Colors.green500}
+                  outlineColor={theme.colors.color}
                   selectionColor={MD2Colors.green700}
                   textColor={theme.colors.color}
                   style={[Styles.mb2]}
@@ -128,12 +140,12 @@ const EmailVerificationPage = () => {
                   left={<TextInput.Icon icon="email" />}
                 />
                 {formSubmitted && email.trim() === '' && (
-                  <HelperText type="error" visible={email.trim() === ''}>
+                  <HelperText type="error" visible={true}>
                     Email is required
                   </HelperText>
                 )}
                 {formSubmitted && !validateEmail(email) && (
-                  <HelperText type="error" visible={!validateEmail(email)}>
+                  <HelperText type="error" visible={true}>
                     Please enter a valid email address
                   </HelperText>
                 )}
@@ -145,7 +157,6 @@ const EmailVerificationPage = () => {
                 buttonColor={MD2Colors.green500}
                 style={{ alignSelf: 'center' }}
                 onPress={handleEmailVerification}
-                disabled={!isConnected || !validateEmail(email)}
               >
                 Verify
               </Button>
@@ -153,11 +164,7 @@ const EmailVerificationPage = () => {
           </View>
         </ScrollView>
       </SafeAreaView>
-      {!isConnected && (
-        <Snackbar visible={!isConnected} onDismiss={() => {}}>
-          No internet connection
-        </Snackbar>
-      )}
+      <ImageDialog status={dialogStatus} title={dialogTitle} message={dialogMessage} backgroundColor={theme.colors.cardsdialogs} color={theme.colors.color} visible={showImageDialog} onDismiss={() => setShowImageDialog(false)} />
     </SafeAreaProvider>
   );
 };

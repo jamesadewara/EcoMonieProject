@@ -1,74 +1,86 @@
 import React from 'react';
-import { StyleSheet, View, ScrollView } from 'react-native';
-import { List, Avatar, Text, TouchableRipple } from 'react-native-paper';
-import CustomAvatar from '../Components/CustomAvatar';
+import { StyleSheet, View, FlatList, RefreshControl, TouchableOpacity } from 'react-native';
+import { List, Text, Avatar,useTheme } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 
-const ChatList = ({ partners, backgroundColor, color }) => {
-  const navigation = useNavigation()
-  // Function to get the current time in the desired format
+const ChatList = ({ partners, handleRefresh, refreshing }) => {
+  const navigation = useNavigation();
+  const theme =useTheme();
+
   const getCurrentTime = () => {
     const date = new Date();
-    let hours = date.getHours();
-    let minutes = date.getMinutes();
-    const ampm = hours >= 12 ? 'pm' : 'am';
-    hours = hours % 12 || 12;
-    minutes = minutes < 10 ? `0${minutes}` : minutes;
-    return `${hours}:${minutes}${ampm}`;
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+    return `${hours}:${minutes}`;
   };
 
-  // Function to handle the dialog logic
-  const showDialog = () => {
-    // Handle dialog logic here
+  const navigateToRoom = () => {
+    navigation.navigate('room');
   };
+
+  const renderChatItem = ({ item }) => (
+    <TouchableOpacity onPress={navigateToRoom} style={[styles.chatItem, { }]}>
+      <Avatar.Image
+        source={{uri:item.profile_pic}}
+        size={60}
+        style={[styles.avatar,{backgroundColor:theme.colors.appbar}]}
+      />
+      <View style={styles.chatContent}>
+        <View style={styles.chatHeader}>
+          <Text style={[styles.username,{color:theme.colors.color}]}>{item.username}</Text>
+          <Text style={styles.time}>{getCurrentTime()}</Text>
+        </View>
+        <Text numberOfLines={1} ellipsizeMode="tail" style={styles.message}>{item.email}</Text>
+      </View>
+    </TouchableOpacity>
+  );
 
   return (
-    <ScrollView>
-      <List.Section style={{ paddingHorizontal: 10 }}>
-        {partners.map((partner) => (
-          <TouchableRipple
-            key={partner.id}
-            onPress={()=>navigation.navigate("room")} // Invoke onPress function when pressed
-            rippleColor="beige"
-            style={{ backgroundColor: backgroundColor, paddingHorizontal: 0, borderRadius: 10, marginVertical: 5 }}
-          >
-            <List.Item
-              title={partner.username}
-              description={partner.email}
-              style={styles.listItem}
-              titleStyle={{ color: color }}
-              right={() => (
-                <Text style={[styles.timeText, { color: color }]}>
-                  {getCurrentTime()}
-                </Text>
-              )}
-              left={() => (
-                <CustomAvatar
-                  // avatar={partner.avatar}
-                  email={partner.email}
-                  size={50}
-                  style={[styles.avatar, { backgroundColor: backgroundColor }]}
-                />
-              )}
-            />
-          </TouchableRipple>
-        ))}
-      </List.Section>
-    </ScrollView>
+    <FlatList
+      data={partners}
+      keyExtractor={item => item.id}
+      renderItem={renderChatItem}
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} enabled={true} />
+      }
+      contentContainerStyle={[styles.container]}
+    />
   );
 };
 
 const styles = StyleSheet.create({
-  listItem: {
-    paddingHorizontal: 10,
-    borderBottomWidth: 1,
+  container: {
+    flexGrow: 1,
+  },
+  chatItem: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    alignItems: 'center',
   },
   avatar: {
-    marginVertical: 10,
-    marginRight: 10,
+    marginRight: 12,
   },
-  timeText: {
+  chatContent: {
+    flex: 1,
+  },
+  chatHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  username: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  time: {
     fontSize: 12,
+    color: '#888',
+  },
+  message: {
+    fontSize: 14,
+    color: '#888',
   },
 });
 

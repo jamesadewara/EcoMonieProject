@@ -10,9 +10,7 @@ export default function App() {
 
   return (
     <StoreProvider store={store}>
-      
         <ScreenManager />
-  
     </StoreProvider>
   );
 }

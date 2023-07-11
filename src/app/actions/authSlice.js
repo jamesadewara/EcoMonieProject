@@ -1,49 +1,58 @@
 import { createSlice } from "@reduxjs/toolkit";
-// import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from "expo-secure-store";
 
-// const fetchToken = async () => {
-//   try {
-//     const token = await AsyncStorage.getItem('token');
-//     return token;
-//   } catch (error) {
-//     console.log('Error fetching token:', error);
-//     return null;
-//   }
-// };
+// Save the token to Expo SecureStore
+const saveTokenToSecureStore = async (token) => {
+  try {
+    await SecureStore.setItemAsync("token", token);
+  } catch (error) {
+    console.error("Error saving token:", error);
+  }
+};
+
+// Retrieve the token from Expo SecureStore
+export const retrieveTokenFromSecureStore = async () => {
+  try {
+    const token = await SecureStore.getItemAsync("token");
+    if (token) {
+      return token;
+    }
+  } catch (error) {
+    console.error("Error retrieving token:", error);
+    return null;
+  }
+};
+
+// Delete the token from Expo SecureStore
+const deleteTokenFromSecureStore = async () => {
+  try {
+    await SecureStore.deleteItemAsync("token");
+  } catch (error) {
+    console.error("Error deleting token:", error);
+  }
+};
 
 const authSlice = createSlice({
-  name: 'auth',
-  initialState: { user: null, token: null },
+  name: "auth",
+  initialState: { token: null },
   reducers: {
     setCredentials: (state, action) => {
-      const user = action.payload.data.email;
-      const accessToken = action.payload.data.access;
-      state.user = user;
-      state.token = accessToken;
-    //   AsyncStorage.setItem('token', accessToken);
+      const { access } = action.payload.data;
+      state.token = access; // Convert the token to a string
+      saveTokenToSecureStore(access); // Save the token to Expo SecureStore
     },
-    logOut: (state, action) => {
-      state.user = null;
+    logOut: (state) => {
       state.token = null;
-    //   AsyncStorage.removeItem('token');
+      deleteTokenFromSecureStore(); // Delete the token from Expo SecureStore
+    },
+    setToken: (state, action) => {
+      state.token = action.payload;
     },
   },
-//   extraReducers: (builder) => {
-//     builder
-//       .addCase(fetchToken.fulfilled, (state, action) => {
-//         state.token = action.payload;
-//       });
-//   },
 });
 
-export const { setCredentials, logOut } = authSlice.actions;
-
-// export const fetchTokenAsync = () => async (dispatch) => {
-//   const token = await fetchToken();
-//   dispatch(fetchToken.fulfilled(token));
-// };
+export const { setCredentials, logOut, setToken } = authSlice.actions;
 
 export default authSlice.reducer;
 
-export const selectCurrentUser = (state) => state.auth.user;
-export const selectCurrentToken = (state) => state.auth.token //|| fetchToken();
+export const selectCurrentToken = (state) => state.auth.token;

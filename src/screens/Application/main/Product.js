@@ -1,4 +1,4 @@
-import React, { useEffect,useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -14,12 +14,14 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useGetProductsQuery } from '../../../app/services/features/productServerApi';
 import { useGetSettingsQuery } from '../../../app/services/features/settingsServerApi';
-import { useGetUserQuery } from '../../../app/services/user/userApiSlice';
-import CustomAlert from '../../../widgets/customAlert';
 import { useSelector } from 'react-redux';
 import { selectCurrentToken } from '../../../app/actions/authSlice';
 import ErrorPage from '../../../Components/ErrorPage';
 import { ProductList } from '../../../Components/ProductCard';
+import Icon from 'react-native-vector-icons/FontAwesome';
+import CustomAlert from "../../../Components/CustomAlert";
+import { useGetUserQuery } from '../../../app/services/registration/signupApiSlice';
+import LoadingSkeleton from '../../../Components/LoadingSkeleton';
 
 
 const ProductPage = () => {
@@ -27,65 +29,109 @@ const ProductPage = () => {
   const accessToken = useSelector(selectCurrentToken);
   const theme = useTheme();
 
-  // Query for getting products
-  const {
-    data: products,
-    isLoading,
-    isError,
-    error,
-    refetch: productsRefetch,
-  } = useGetProductsQuery({ accessToken });
+  // Loading and error states
+  const [loadingUser, setLoadingUser] = useState(true);
+  const [loadingProducts, setLoadingProducts] = useState(true);
+  const [loadingSettings, setLoadingSettings] = useState(true);
+  const [error, setError] = useState(false);
+  const [filterActive, setFilterActive] = useState(false);
 
   // Query for getting user info
   const {
     data: userInfo = [],
-    isLoadingUser,
-    isErrorUser,
+    isLoading: isLoadingUser,
+    isError: isErrorUser,
     refetch: userRefetch,
   } = useGetUserQuery({ accessToken });
 
   // Query for getting settings
   const {
     data: settings = [],
-    isLoadingSettings,
+    isLoading: isLoadingSettings,
+    isError: isErrorSettings,
     refetch: settingsRefetch,
   } = useGetSettingsQuery({ accessToken });
 
-  const [refreshing, setRefreshing] = useState(false);
+  // Query for getting products
+  const {
+    data: productsData,
+    isLoading: isLoadingProducts,
+    isError: isErrorProducts,
+    refetch: productsRefetch,
+  } = useGetProductsQuery({ accessToken });
+
+  // Filtered products state
+  const [filteredProducts, setFilteredProducts] = useState([]);
 
   useEffect(() => {
     // Fetch user, settings, and products data on component mount
-    userRefetch();
-    settingsRefetch();
-    productsRefetch();
+    Promise.all([userRefetch(), settingsRefetch(), productsRefetch()])
+      .then(() => {
+        setLoadingUser(false);
+        setLoadingProducts(false);
+        setLoadingSettings(false);
+      })
+      .catch(() => {
+        setLoadingUser(false);
+        setLoadingProducts(false);
+        setLoadingSettings(false);
+        setError(true);
+      });
   }, []);
 
   const handleRefresh = () => {
-    setRefreshing(true);
     // Refresh the products data
-    productsRefetch();
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 1000);
+    Promise.all([productsRefetch()])
+      .then(() => {
+        setLoadingProducts(false);
+        setFilteredProducts(productsData);
+      })
+      .catch(() => {
+        setLoadingProducts(false);
+        setError(true);
+      });
+  };
+
+  const handleFilterUserProducts = (query) => {
+    setFilterActive((filterActive) => !filterActive);
+
+    // Check if productsData is defined before filtering
+    if (filterActive) {
+      setFilteredProducts(
+        productsData.filter((product) =>
+          product.user.toString().includes(query.toString())
+        )
+      );
+    } else {
+      setFilteredProducts(productsData);
+    }
   };
 
   const renderView = () => {
-    if (isError) {
+    if (isErrorSettings || isErrorUser || isErrorProducts) {
       return <ErrorPage handleRefresh={handleRefresh} />;
     }
 
-    if (isLoading || isLoadingUser || isLoadingSettings) {
-      return <CustomAlert visible={true} message="Loading..." />;
+    if (loadingUser || loadingProducts || loadingSettings) {
+      return <LoadingSkeleton isLoading={true} />
     }
 
-    // Log the names of the products
-    products?.forEach((data) => {
-      console.log(data.name, 'Tests');
-    });
-
-    // Render the list of products
-    return <ProductList products={products} backgroundColor={theme.colors.cardsdiaogs} color={theme.colors.color} navigation={navigation} refreshing={refreshing} handleRefresh={handleRefresh} />;
+    return (
+      <ProductList
+        products={filteredProducts}
+        userInfo={userInfo}
+        backgroundColor={theme.colors.cardsdialogs}
+        color={theme.colors.color}
+        navigation={navigation}
+        refreshing={isLoadingProducts}
+        handleRefresh={handleRefresh}
+      />
+    );
   };
+
+  useEffect(() => {
+    setFilteredProducts(productsData);
+  }, [productsData]);
 
   return (
     <SafeAreaProvider>
@@ -95,16 +141,23 @@ const ProductPage = () => {
           title="Trash"
           titleStyle={{ color: theme.colors.color }}
         />
+        {userInfo.type_of_business === '2' && (
+        <Appbar.Action
+          icon={filterActive ? 'close' : 'filter'}
+          iconColor={theme.colors.color}
+          onPress={() => handleFilterUserProducts(userInfo.id)}
+        />
+        )}
         <Appbar.Action
           icon="magnify"
           iconColor={theme.colors.color}
           onPress={() => navigation.navigate('search')}
         />
       </Appbar.Header>
-      <SafeAreaView style={{ backgroundColor: theme.colors.background, flex: 1 }}>
-        {/* Render the view */}
-        {renderView()}
-      </SafeAreaView>
+
+      <View style={{ flex: 1,backgroundColor:theme.colors.background }}>
+      {renderView()}
+      </View>
 
       {/* Floating action button */}
       {userInfo.type_of_business === '2' && (
@@ -112,7 +165,9 @@ const ProductPage = () => {
           icon="plus"
           color="white"
           style={styles.fabStyle}
-          onPress={() => navigation.navigate('upload', { productInfo: {} })}
+          onPress={() =>
+            navigation.navigate('upload', { productInfo: {} })
+          }
         />
       )}
     </SafeAreaProvider>
@@ -120,12 +175,6 @@ const ProductPage = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    width: '100%',
-    flexDirection: 'row',
-    paddingHorizontal: 10,
-    flexWrap: 'wrap',
-  },
   fabStyle: {
     position: 'absolute',
     bottom: 120,

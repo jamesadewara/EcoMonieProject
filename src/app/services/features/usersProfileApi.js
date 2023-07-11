@@ -14,25 +14,25 @@ const baseQuery = fetchBaseQuery({
   }
 });
 
-export const productServerApi = createApi({
-  reducerPath: 'productServerApi',
+export const profileServerApi = createApi({
+  reducerPath: 'profileServerApi',
   baseQuery: baseQuery,
 
-  tagTypes: ['getProducts'], // Add 'getProducts' tag type
+  tagTypes: ['getProfile'], // Add 'getProfile' tag type
   endpoints: (builder) => ({
-    getProducts: builder.query({
-      query: (page = 1, accessToken) => ({
-        url: `/product_api/products/?_page=${page}&_limit=10`,
+    getProfile: builder.query({
+      query: (page=1,accessToken) => ({
+        url: `/chat_api/userprofiles/?_page=${page}&_limit=10`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
       }),
-      providesTags: ['getProducts'], // Add providesTags callback
+      providesTags: ['getProfile'], // Add providesTags callback
     }),
-    createProduct: builder.mutation({
+    createProfile: builder.mutation({
       query: ({ user, name, image, price, category, description, ordered, accessToken }) => ({
-        url: '/product_api/products/create/',
+        url: '/chat_api/products/create/',
         headers: {
           Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
@@ -40,11 +40,11 @@ export const productServerApi = createApi({
         method: 'POST',
         body: { user, name, image, price, category, description, ordered },
       }),
-      invalidatesTags: ['getProducts'],
+      invalidatesTags: ['getProfile'],
     }),
-    createProductImg: builder.mutation({
+    createProfileImg: builder.mutation({
       query: ({ img, accessToken }) => ({
-        url: '/product_api/products/create/image/',
+        url: '/chat_api/products/create/image/',
         headers: {
           Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'multipart/form-data',
@@ -52,34 +52,34 @@ export const productServerApi = createApi({
         method: 'POST',
         body: img,
       }),
-      invalidatesTags: ['getProducts'],
+      invalidatesTags: ['getProfile'],
     }),
-    updateProduct: builder.mutation({
+    updateProfile: builder.mutation({
       query: ({ id, title }) => ({
         url: `${id}`,
         method: 'PUT',
         body: { title },
       }),
-      invalidatesTags: ['getProducts'],
+      invalidatesTags: ['getProfile'],
     }),
-    deleteProduct: builder.mutation({
+    deleteProfile: builder.mutation({
       query: ({ id, accessToken }) => ({
-        url: `/product_api/products/delete/${id}/`,
+        url: `/chat_api/products/delete/${id}/`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
         method: 'DELETE',
       }),
-      invalidatesTags: ['getProducts'],
+      invalidatesTags: ['getProfile'],
     }),
   }),
 });
 
 export const {
-  useGetProductsQuery,
-  useCreateProductMutation,
-  useCreateProductImgMutation,
-  useUpdateProductMutation,
-  useDeleteProductMutation,
-} = productServerApi;
+  useGetProfileQuery,
+  useCreateProfileMutation,
+  useCreateProfileImgMutation,
+  useUpdateProfileMutation,
+  useDeleteProfileMutation,
+} = profileServerApi;

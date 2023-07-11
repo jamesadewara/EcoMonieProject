@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ActivityIndicator, StyleSheet, Modal, BackHandler } from 'react-native';
 
-const CustomAlert = ({ visible, message }) => {
+const CustomAlert = ({ visible, message,backgroundColor,color }) => {
   const [colorChanged, setColorChanged] = useState(false);
 
   useEffect(() => {
@@ -40,9 +40,9 @@ const CustomAlert = ({ visible, message }) => {
   return (
     <Modal visible={visible} transparent={true}  animationType="fade">
       <View style={styles.container}>
-        <View style={[styles.alertBox,]}>
+        <View style={[styles.alertBox,{backgroundColor:backgroundColor}]}>
           <ActivityIndicator animate={true} size={90} color={colorChanged ? 'red' : 'green'} />
-          <Text style={styles.message}>{message}</Text>
+          <Text style={[styles.message,{color:color}]}>{message}</Text>
         </View>
       </View>
     </Modal>

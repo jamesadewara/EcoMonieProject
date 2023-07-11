@@ -47,7 +47,7 @@ const ProductCard = ({ onPress, source, name, price, description, date, width, b
       )}
       <Text
         style={[styles.cardDescription, { color: color }]}
-        numberOfLines={3}
+        numberOfLines={2}
         ellipsizeMode="tail"
       >
         {description}
@@ -59,7 +59,7 @@ const ProductCard = ({ onPress, source, name, price, description, date, width, b
   );
 };
 
-export const  ProductList = ({ products, navigation, handleRefresh, refreshing, color, backgroundColor }) => {
+export const  ProductList = ({ products,userInfo, navigation, handleRefresh, refreshing, color, backgroundColor }) => {
   return (
     <View>
       {/* Add the Appbar component here */}
@@ -80,7 +80,7 @@ export const  ProductList = ({ products, navigation, handleRefresh, refreshing, 
                 backgroundColor={backgroundColor}
                 onPress={() =>
                   navigation.navigate('product_info', {
-                    data,
+                    data,userInfo:userInfo
                   })
                 }
               />
@@ -128,9 +128,8 @@ export const CategoryList = ({ categoriesData, handleFilterCateg }) => {
 
 const styles = StyleSheet.create({
   scrollViewContent: {
-    flexGrow: 1,
+    flex: 1,
     alignItems: 'center',
-    paddingVertical: 20,
   },
   container: {
     flexDirection: 'row',

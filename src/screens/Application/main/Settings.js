@@ -1,27 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import {
-  SafeAreaView,
-  Text,
-  ScrollView,
-  Linking,
-  StyleSheet,
-  View,
-  Image
-} from 'react-native';
+import { SafeAreaView, Text, ScrollView, Linking, StyleSheet, View, Image, RefreshControl } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Button, List, TouchableRipple, Dialog, Portal, Appbar, MD2Colors, useTheme,Switch } from 'react-native-paper';
+import { Button, List, TouchableRipple, Dialog, Portal, Appbar, Switch, ActivityIndicator, useTheme } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import CustomAlert from '../../../widgets/customAlert';
-import { useGetSettingsQuery } from '../../../app/services/features/settingsServerApi';
 import { useDispatch, useSelector } from 'react-redux';
-import { logOut, selectCurrentToken } from '../../../app/actions/authSlice';
 import * as FileSystem from 'expo-file-system';
+
+import CustomAlert from "../../../Components/CustomAlert";
+import { useGetSettingsQuery } from '../../../app/services/features/settingsServerApi';
+
 import { useLogoutMutation } from '../../../app/services/authentication/authApiSlice';
 import ErrorPage from '../../../Components/ErrorPage';
+
+import { logOut, selectCurrentToken } from '../../../app/actions/authSlice';
 import { selectCurrentTheme, setTheme } from '../../../app/actions/themeSlice';
+import { useGetUserQuery } from '../../../app/services/registration/signupApiSlice';
+import LoadingSkeleton from '../../../Components/LoadingSkeleton';
 
 
+// Import images
 const Thumbnail = {
   noNetwork: require('../../../../assets/img/anime/noInternet.gif'),
   icon: require('../../../../assets/icon.png')
@@ -30,18 +28,26 @@ const Thumbnail = {
 export default function SettingsPage() {
   const navigation = useNavigation();
   const dispatch = useDispatch();
+  const [refreshing, setRefreshing] = useState(false);
 
+  // Redux state and actions
   const accessToken = useSelector(selectCurrentToken);
+  console.log(accessToken,'settings')
   const { data: settings = [], isLoading, isError, error, refetch } = useGetSettingsQuery({ accessToken });
+  // Query for getting user info
+  const { data: userInfo, isLoadingUser, isErrorUser, refetch:userRefetch } = useGetUserQuery({ accessToken });
   const { logout } = useLogoutMutation();
 
+
+  // Settings and dialogs state
   const settingsInfo = settings[0];
   const [logoutDialog, setLogoutDialog] = useState(false);
   const [cacheDialog, setCacheDialog] = useState(false);
   const [aboutDialog, setAboutDialog] = useState(false);
 
-  const [isThemeMode, setIsThemeMode] = useState(useSelector(selectCurrentTheme));
-  const  theme = useTheme()
+  // Theme state and theme context
+  const isThemeMode = useSelector(selectCurrentTheme);
+  const theme = useTheme();
 
   // Show/hide logout dialog
   const showLogoutDialog = () => setLogoutDialog(true);
@@ -56,14 +62,14 @@ export default function SettingsPage() {
   const hideAboutDialog = () => setAboutDialog(false);
 
   // Handle logout
-  async function handleLogout() {
+  const handleLogout = async () => {
     try {
       await logout({ accessToken });
     } catch (error) {
       // Handle error
     }
     dispatch(logOut());
-  }
+  };
 
   // Clear app cache
   const handleClearCache = async () => {
@@ -80,12 +86,10 @@ export default function SettingsPage() {
     }
   };
 
-
-  const onToggleThemeMode = async () => {
-    setIsThemeMode(!isThemeMode); // Toggle the theme value
-    dispatch(setTheme(!isThemeMode))
+  // Toggle theme mode
+  const onToggleThemeMode = () => {
+    dispatch(setTheme(!isThemeMode));
   };
-  
 
   // Extract data from settings object
   const aboutData = settingsInfo?.about;
@@ -97,12 +101,14 @@ export default function SettingsPage() {
   const help_and_supportData = settingsInfo?.help_and_support;
   const updatesData = settingsInfo?.updates;
 
-  
+  // Extract data from users object
+  const isBuyer = userInfo?.is_buyer||false;
+  const isSeller = userInfo?.is_buyer||false;
 
-
+  // Sections and items
   const SECTIONS = [
     {
-      id:1,
+      id: 1,
       header: 'Account',
       items: [
         {
@@ -110,23 +116,23 @@ export default function SettingsPage() {
           icon: 'account',
           label: 'Edit your profile',
           description: '',
-          color: MD2Colors.green900,
-          navigate: "edit_profile",
-          data_route: { 'email': 'jamesadewara1@gmail.com' }
-        },
+          color: 'green',
+          navigate: !isBuyer && !isSeller ? "business_type" : "checkout",
+          internet: true,
+        },       
         {
           id: 'change_password',
           icon: 'key',
           label: 'Change your password',
           color: 'silver',
           navigate: "change_password",
-          data_route: { 'email': 'jamesadewara1@gmail.com' }
+          internet: true,
         },
         {
           id: 'cache',
           icon: 'memory',
           label: 'Clear your device cache',
-          color: MD2Colors.blue800,
+          color: 'blue',
           action: showCacheDialog,
         },
         {
@@ -139,7 +145,7 @@ export default function SettingsPage() {
       ],
     },
     {
-      id:2,
+      id: 2,
       header: 'Services',
       items: [
         {
@@ -157,6 +163,7 @@ export default function SettingsPage() {
           description: '',
           color: 'cyan',
           url: updatesData,
+          internet: true,
         },
         {
           id: 'customer_service',
@@ -165,11 +172,12 @@ export default function SettingsPage() {
           description: 'Sell by making a call',
           color: 'green',
           url: `tel:${contactData}`,
+          internet: true,
         },
       ],
     },
     {
-      id:3,
+      id: 3,
       header: 'General',
       items: [
         {
@@ -180,8 +188,8 @@ export default function SettingsPage() {
           color: 'brown',
           displaySwitch: true,
           action: onToggleThemeMode,
-          switched: isThemeMode, // Correct the variable name here
-          onSwitch: onToggleThemeMode, // Use onToggleThemeMode function
+          switched: isThemeMode,
+          onSwitch: onToggleThemeMode,
         },
         {
           id: 'rates',
@@ -190,6 +198,7 @@ export default function SettingsPage() {
           description: '',
           color: 'orange',
           url: rateData,
+          internet: true,
         },
         {
           id: 'share',
@@ -198,6 +207,7 @@ export default function SettingsPage() {
           description: '',
           color: 'purple',
           url: shareData,
+          internet: true,
         },
         {
           id: 'feedback',
@@ -206,6 +216,7 @@ export default function SettingsPage() {
           description: 'Give us a review of what you like about our app',
           color: 'green',
           url: `mailto:${feedbackData}`,
+          internet: true,
         },
         {
           id: 'about',
@@ -213,46 +224,103 @@ export default function SettingsPage() {
           label: 'About Us',
           color: 'gray',
           action: showAboutDialog,
+          internet: true,
         },
         {
           id: 'terms',
           icon: 'file-document',
           label: 'Terms & Conditions',
           description: '',
-          color: MD2Colors.teal300,
+          color: 'teal',
           navigate: "terms",
           data_route: { page: "Terms & Conditions", link: terms_and_serviceData },
+          internet: true,
         },
         {
           id: 'help',
           icon: 'lifebuoy',
           label: 'Help & Support',
           description: '',
-          color: MD2Colors.green300,
+          color: 'green',
           navigate: "terms",
           data_route: { page: "Help & Support", link: help_and_supportData },
+          internet: true,
         },
       ],
     },
   ];
+  
 
+  // Handle refresh
   const handleRefresh = () => {
+    setRefreshing(true);
     refetch();
+    userRefetch();
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 1000);
   };
 
+  // Render view based on loading and error state
   const renderView = () => {
-    if (isError) {
-      return <ErrorPage handleRefresh={handleRefresh} />;
+    if (isLoading||isLoadingUser) {
+      return (
+        <LoadingSkeleton isLoading={isLoading} />
+      );
     }
 
-    return (
-      <View>
-        {isLoading && (
-          <CustomAlert visible={isLoading} message="Loading..." />
-        )}
 
+    return (
+      <ScrollView contentContainerStyle={styles.container} refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} enabled={true} />
+      }>
+        <React.Fragment>
+          {SECTIONS.map(({ header, items, id }) => (
+            <View key={id} style={[styles.section, { backgroundColor: theme.colors.cardsdialogs }]}>
+              <List.Section>
+                <List.Subheader style={[styles.sectionHeader, { color: theme.colors.color }]}>
+                  {header}
+                </List.Subheader>
+                {items.map(({ id, label, icon, color, action, navigate, description, url, data_route, displaySwitch, switched, onSwitch, internet }) => (
+                  ((isError || isErrorUser || error ) && internet === undefined) || !isError ? (
+                    <TouchableRipple
+                      key={id}
+                      onPress={() => (navigate ? navigation.navigate(navigate, data_route) : url ? Linking.openURL(url) : action())}
+                      rippleColor="grey"
+                    >
+                      <List.Item
+                        style={styles.listItem}
+                        titleStyle={{ color: theme.colors.color }}
+                        descriptionStyle={{ color: theme.colors.color }}
+                        description={description}
+                        title={label}
+                        left={() => <List.Icon icon={icon} color={color} />}
+                        right={() => displaySwitch ? <Switch value={switched} onValueChange={onSwitch} ios_backgroundColor="#E5E5EA" /> : null}
+                      />
+                    </TouchableRipple>
+                  ) : null
+                ))}
+              </List.Section>
+            </View>
+          ))}
+        </React.Fragment>
+        <View style={styles.bottomSpacer} />
+      </ScrollView>
+    );
+  };
+
+  return (
+    <SafeAreaProvider>
+      <Appbar.Header style={{ backgroundColor: theme.colors.appbar }}>
+        <Appbar.Content
+          title="Settings"
+          titleStyle={{ color: theme.colors.color }}
+        />
+      </Appbar.Header>
+      <SafeAreaView style={{ backgroundColor: theme.colors.background, flex: 1 }}>
+        {renderView()}
         <Portal>
-          <Dialog visible={logoutDialog} onDismiss={hideLogoutDialog} style={{ backgroundColor: theme.colors.cardsdiaogs }}>
+          <Dialog visible={logoutDialog} onDismiss={hideLogoutDialog} style={{ backgroundColor: theme.colors.cardsdialogs }}>
             <Dialog.Title style={{ color: theme.colors.color }}>Logout</Dialog.Title>
             <Dialog.Content>
               <Text variant="titleLarge" style={{ color: theme.colors.color }}>Are you sure you want to logout?</Text>
@@ -267,7 +335,7 @@ export default function SettingsPage() {
         </Portal>
 
         <Portal>
-          <Dialog visible={cacheDialog} onDismiss={hideCacheDialog} style={{ backgroundColor: theme.colors.cardsdiaogs }}>
+          <Dialog visible={cacheDialog} onDismiss={hideCacheDialog} style={{ backgroundColor: theme.colors.cardsdialogs }}>
             <Dialog.Title style={{ color: theme.colors.color }}>Reset Systems Cache</Dialog.Title>
             <Dialog.Content>
               <Text style={[styles.dialogText, { color: theme.colors.color }]}>
@@ -283,7 +351,7 @@ export default function SettingsPage() {
         </Portal>
 
         <Portal>
-          <Dialog visible={aboutDialog} onDismiss={hideAboutDialog} style={{ backgroundColor: theme.colors.cardsdiaogs }}>
+          <Dialog visible={aboutDialog} onDismiss={hideAboutDialog} style={{ backgroundColor: theme.colors.cardsdialogs }}>
             <Dialog.ScrollArea>
               <ScrollView contentContainerStyle={styles.aboutDialogContent}>
                 <Text style={{ color: theme.colors.color }}>{aboutData}</Text>
@@ -291,65 +359,19 @@ export default function SettingsPage() {
             </Dialog.ScrollArea>
           </Dialog>
         </Portal>
-
-        <ScrollView contentContainerStyle={styles.container}>
-          <React.Fragment>
-            {SECTIONS.map(({ header, items,id }) => (
-              <View key={id} style={[styles.section, { backgroundColor: theme.colors.cardsdiaogs }]}>
-                <List.Section>
-                  <List.Subheader style={[styles.sectionHeader, { color: theme.colors.color }]}>
-                    {header}
-                  </List.Subheader>
-                  {items.map(({ id, label, icon, color, action, navigate, description, url, data_route,displaySwitch ,switched,onSwitch}) => (
-                    <TouchableRipple
-                      key={id}
-                      onPress={() => (navigate ? navigation.navigate(navigate, data_route) : url ? Linking.openURL(url) : action())}
-                      rippleColor="beige"
-                    >
-                      <List.Item
-                        style={[styles.listItem, {}]}
-                        titleStyle={{ color: theme.colors.color }}
-                        descriptionStyle={{ color: theme.colors.color }}
-                        description={description}
-                        title={label}
-                        left={() => <List.Icon icon={icon} color={color} />}
-                        right={() => displaySwitch ? <Switch value={switched} onValueChange={onSwitch} ios_backgroundColor="#E5E5EA" /> : null}
-                      />
-                    </TouchableRipple>
-                  ))}
-                </List.Section>
-              </View>
-            ))}
-          </React.Fragment>
-          <View style={styles.bottomSpacer} />
-        </ScrollView>
-      </View>
-    );
-  };
-
-  return (
-    <SafeAreaProvider>
-      <Appbar.Header style={{ backgroundColor: theme.colors.appbar }}>
-        <Appbar.Content
-          title="Settings"
-          titleStyle={{ color: theme.colors.color }}
-        />
-      </Appbar.Header>
-      <SafeAreaView style={{ backgroundColor: theme.colors.background, flex: 1 }}>
-        {renderView()}
       </SafeAreaView>
     </SafeAreaProvider>
   );
 }
 
 const styles = StyleSheet.create({
-  safeAreaContainer: {
-    flex: 1,
+  container: {
+    flexGrow: 1,
   },
   section: {
     marginVertical: 15,
     borderRadius: 20,
-    margin: 15,
+    marginHorizontal: 15,
     paddingBottom: 7,
   },
   sectionHeader: {
@@ -361,13 +383,9 @@ const styles = StyleSheet.create({
   bottomSpacer: {
     marginBottom: 120,
   },
-  dialogText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  aboutDialogContent: {
-    paddingHorizontal: 24,
-    paddingTop: 24,
-    paddingBottom: 36,
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

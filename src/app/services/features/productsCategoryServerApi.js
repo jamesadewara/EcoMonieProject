@@ -4,7 +4,7 @@ export const productCategoryServerApi = apiSlice.injectEndpoints({
   endpoints: builder => ({
     getCategory: builder.query({
       query: ({accessToken}) => ({
-      url: '/api/product-category/',
+      url: '/product_api/product-category/',
       headers: {
       Authorization: `Bearer ${accessToken}`, // Replace `accessToken` with the actual user's authentication token
                 'Content-Type': 'application/json',

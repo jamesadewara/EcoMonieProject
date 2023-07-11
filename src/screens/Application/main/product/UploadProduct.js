@@ -9,12 +9,15 @@ import NetInfo from '@react-native-community/netinfo';
 import { useNavigation } from '@react-navigation/native';
 
 import { useGetCategoryQuery } from '../../../../app/services/features/productsCategoryServerApi';
+
 import { selectCurrentToken } from '../../../../app/actions/authSlice';
 import { useSelector } from 'react-redux';
 import ModalWithList from '../../../../Components/ModalWithList';
 import { useCreateProductMutation, useCreateProductImgMutation, useGetProductsQuery } from '../../../../app/services/features/productServerApi';
-import CustomAlert from '../../../../widgets/customAlert';
+import CustomAlert from '../../../../Components/CustomAlert';
 import { Styles } from '../../../../css/design';
+import { useGetUserQuery } from '../../../../app/services/registration/signupApiSlice';
+
 
 const SwiperComponent = ({ imgs }) => {
   return (
@@ -67,6 +70,13 @@ const UploadProductPage = ({ route }) => {
 
   const accessToken = useSelector(selectCurrentToken);
   const { data: categories, isLoadingCategories, isErrorCategories, errorCategories } = useGetCategoryQuery({ accessToken });
+    // Query for getting user info
+    const {
+      data: userInfo = [],
+      isLoading: isLoadingUser,
+      isError: isErrorUser,
+      refetch: userRefetch,
+    } = useGetUserQuery({ accessToken });
   const theme = useTheme();
 
   useEffect(() => {
@@ -183,11 +193,10 @@ const UploadProductPage = ({ route }) => {
     const img_list= await handleImgUpload();
     console.log(img_list, 'cross check it')
     try {
-      const user = 1;
       const name = trashName;
       const ordered = false;
       const payload = {
-        user,
+        user:userInfo.id,
         name,
         price,
         image: img_list,
@@ -201,7 +210,7 @@ const UploadProductPage = ({ route }) => {
       console.log(payload, 'test');
       Alert.alert('Upload Successful', 'Your upload was successful.');
       //if no errors
-      console.log(uploadedImgList);
+      console.log(userInfo);
       navigation.goBack()
 
     } catch (error) {
@@ -233,6 +242,23 @@ const UploadProductPage = ({ route }) => {
     setModalVisible(false);
   };
 
+  if (isLoadingCategories) {
+    return <CustomAlert visible={true} message="Loading categories..." />;
+  }
+
+  if (isErrorCategories) {
+    return <CustomAlert visible={true} message={`Error: ${errorCategories}`} />;
+  }
+
+  if (isErrorUser) {
+    return <CustomAlert visible={true} message="Error loading user info" />;
+  }
+
+  // Check if user info is still loading
+  if (isLoadingUser) {
+    return <CustomAlert visible={true} message="Loading user info..." />;
+  }
+
   return (
     <SafeAreaProvider>
       <Appbar.Header style={{ backgroundColor: theme.colors.appbar }}>
@@ -245,7 +271,7 @@ const UploadProductPage = ({ route }) => {
 
       <Portal>
         <ModalWithList
-          backgroundColor={theme.colors.cardsdiaogs}
+          backgroundColor={theme.colors.cardsdialogs}
           color={theme.colors.color}
           visible={modalVisible}
           onDismiss={closeModal}
@@ -257,7 +283,7 @@ const UploadProductPage = ({ route }) => {
       </Portal>
       <CustomAlert visible={isLoading} message="Loading..." />
       <ScrollView style={{backgroundColor: theme.colors.background}}>
-        <View style={{ backgroundColor: theme.colors.cardsdiaogs, height: 300, width: '90%', margin: 30, borderRadius: 50, alignSelf: 'center' }}>
+        <View style={{ backgroundColor: theme.colors.cardsdialogs, height: 300, width: '90%', margin: 30, borderRadius: 50, alignSelf: 'center' }}>
           <View style={styles.container}>
             {appendImages.length > 0 && <SwiperComponent key={swiperKey} imgs={appendImages} />}
             {appendImages.length > 0 && (
@@ -341,7 +367,7 @@ const UploadProductPage = ({ route }) => {
             onPress={handleUploadProduct}
             disabled={!isConnected || trashName.trim() === '' || price.trim() === ''}
           >
-            Next
+            Submit
           </Button>
         </View>
       </ScrollView>

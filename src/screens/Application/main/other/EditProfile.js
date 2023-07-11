@@ -107,7 +107,7 @@ const EditProfilePage = ({ route, navigation }) => {
     <SafeAreaProvider>
       <Appbar.Header style={{ backgroundColor: theme.colors.appbar }}>
         <Appbar.BackAction onPress={() => navigation.goBack()} color={theme.colors.color} />
-        <Appbar.Content title="Registration" titleStyle={{ color: theme.colors.color }} />
+        <Appbar.Content title="MyProfile" titleStyle={{ color: theme.colors.color }} />
       </Appbar.Header>
       <SafeAreaView style={{ backgroundColor: theme.colors.background, flex: 1 }}>
         <ScrollView>
