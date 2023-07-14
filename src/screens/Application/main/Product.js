@@ -30,6 +30,7 @@ const ProductPage = () => {
   const [dialogMessage, setDialogMessage] = useState('');
   const [dialogStatus, setDialogStatus] = useState('');
   const [alertMessage, setAlertMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   // Mutation hook for deleting products
   const [deleteProduct] = useDeleteProductMutation();
@@ -100,17 +101,14 @@ const ProductPage = () => {
         const response = await deleteProduct({ id: selectedProductIds[i] });
         console.log(response);
 
-        if (response.error && response.error.status === 401) {
-          setDialogTitle('Login Failed');
-          setDialogMessage('User does not exist, try another email and password.');
-          setDialogStatus('error');
-          setShowImageDialog(true);
-        } else if (response.error && response.error.status === 'FETCH_ERROR') {
-          setDialogTitle('Login Error');
-          setDialogMessage('An error occurred while login, please try again later.');
-          setDialogStatus('error');
-          setShowImageDialog(true);
+        try{
+          
+          if (response.error.name == "AbortError") {
+            setDialogTitle('Aborted');
+            setDialogMessage(response.error.message);
+            setShowImageDialog(true);
         }
+      }
       }
     } catch (error) {
       setDialogTitle('Login Error');

@@ -38,7 +38,7 @@ const baseQuery = fetchBaseQuery({
     
         return result;
         } catch (error) {
-        if (error.status === 'AbortError') {
+        if (error.name === 'AbortError') {
             // Handle timeout error here
             throw new Error('Request timed out');
         } else {
