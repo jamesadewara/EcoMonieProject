@@ -75,7 +75,8 @@ const TabButton = (props) => {
   );
 };
 
-export default function MainScreen() {
+export default function MainScreen({route}) {
+
       // Access the current theme from react-native-paper
       const theme = useTheme();
   return (
@@ -85,11 +86,11 @@ export default function MainScreen() {
         tabBarStyle: {
           height: 50,
           position: 'absolute',
-          bottom: 16,
+          bottom: 18,
           right: 16,
           left: 16,
           borderRadius: 16,
-          backgroundColor:theme.colors.appbar
+          backgroundColor:theme.colors.appbar,
         },
       }}
     >

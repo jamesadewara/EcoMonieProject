@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { SafeAreaView, Text, ScrollView, Linking, StyleSheet, View, Image, RefreshControl } from 'react-native';
+import { SafeAreaView, Text, ScrollView, Linking, StyleSheet, View, Image, RefreshControl,Share } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Button, List, TouchableRipple, Dialog, Portal, Appbar, Switch, ActivityIndicator, useTheme } from 'react-native-paper';
+import { Button, List, TouchableRipple, Dialog, Portal, Appbar, Switch, ActivityIndicator, useTheme, Badge, MD2Colors } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
@@ -18,7 +18,6 @@ import { selectCurrentTheme, setTheme } from '../../../app/actions/themeSlice';
 import { useGetUserQuery } from '../../../app/services/registration/signupApiSlice';
 import LoadingSkeleton from '../../../Components/LoadingSkeleton';
 
-
 // Import images
 const Thumbnail = {
   noNetwork: require('../../../../assets/img/anime/noInternet.gif'),
@@ -32,12 +31,11 @@ export default function SettingsPage() {
 
   // Redux state and actions
   const accessToken = useSelector(selectCurrentToken);
-  console.log(accessToken,'settings')
+  console.log(accessToken, 'settings');
   const { data: settings = [], isLoading, isError, error, refetch } = useGetSettingsQuery({ accessToken });
   // Query for getting user info
-  const { data: userInfo, isLoadingUser, isErrorUser, refetch:userRefetch } = useGetUserQuery({ accessToken });
+  const { data: userInfo, isLoadingUser, isErrorUser, refetch: userRefetch } = useGetUserQuery({ accessToken });
   const { logout } = useLogoutMutation();
-
 
   // Settings and dialogs state
   const settingsInfo = settings[0];
@@ -46,20 +44,13 @@ export default function SettingsPage() {
   const [aboutDialog, setAboutDialog] = useState(false);
 
   // Theme state and theme context
-  const isThemeMode = useSelector(selectCurrentTheme);
+  const currentTheme = useSelector(selectCurrentTheme);
+  const [isThemeMode, setIsThemeMode] = useState(currentTheme === 'dark');
   const theme = useTheme();
 
   // Show/hide logout dialog
   const showLogoutDialog = () => setLogoutDialog(true);
   const hideLogoutDialog = () => setLogoutDialog(false);
-
-  // Show/hide cache dialog
-  const showCacheDialog = () => setCacheDialog(true);
-  const hideCacheDialog = () => setCacheDialog(false);
-
-  // Show/hide about dialog
-  const showAboutDialog = () => setAboutDialog(true);
-  const hideAboutDialog = () => setAboutDialog(false);
 
   // Handle logout
   const handleLogout = async () => {
@@ -71,24 +62,14 @@ export default function SettingsPage() {
     dispatch(logOut());
   };
 
-  // Clear app cache
-  const handleClearCache = async () => {
-    try {
-      // Get the cache directory path
-      const cacheDirectory = FileSystem.cacheDirectory;
-
-      // Delete all files in the cache directory
-      await FileSystem.deleteAsync(cacheDirectory, { idempotent: true });
-
-      console.log('Cache cleared successfully');
-    } catch (error) {
-      console.log('Error clearing cache:', error);
-    }
-  };
 
   // Toggle theme mode
   const onToggleThemeMode = () => {
-    dispatch(setTheme(!isThemeMode));
+    console.log(1, isThemeMode)
+    setIsThemeMode(!isThemeMode)
+    const newThemeMode = !isThemeMode ? 'dark' : 'light';
+    dispatch(setTheme(newThemeMode));
+    
   };
 
   // Extract data from settings object
@@ -102,8 +83,46 @@ export default function SettingsPage() {
   const updatesData = settingsInfo?.updates;
 
   // Extract data from users object
-  const isBuyer = userInfo?.is_buyer||false;
-  const isSeller = userInfo?.is_buyer||false;
+  const [isBuyer, setIsBuyer] = useState(false);
+  const [isSeller, setIsSeller] = useState(false);
+
+  const shareApp = async () => {
+    try {
+      const result = await Share.share({
+        message: shareData,
+        url: shareData,
+        title: 'EcoMonie',
+      });
+      
+      if (result.action === Share.sharedAction) {
+        if (result.activityType) {
+          // Sharing completed
+          console.log(`Shared with ${result.activityType}`);
+        } else {
+          // Sharing dismissed
+          console.log('Sharing dismissed');
+        }
+      } else if (result.action === Share.dismissedAction) {
+        // Sharing dismissed
+        console.log('Sharing dismissed');
+      }
+    } catch (error) {
+      console.error('Error sharing app:', error.message);
+    }
+  };
+  
+
+  useEffect(() => {
+    if (isErrorUser) {
+      // Handle error case
+      setIsBuyer(false);
+      setIsSeller(false);
+    } else if (!isLoadingUser && userInfo) {
+      // Handle success case
+      setIsBuyer(userInfo?.is_buyer);
+      setIsSeller(userInfo?.is_seller);
+    }
+  }, []);
 
   // Sections and items
   const SECTIONS = [
@@ -119,21 +138,13 @@ export default function SettingsPage() {
           color: 'green',
           navigate: !isBuyer && !isSeller ? "business_type" : "checkout",
           internet: true,
-        },       
-        {
-          id: 'change_password',
-          icon: 'key',
-          label: 'Change your password',
-          color: 'silver',
-          navigate: "change_password",
-          internet: true,
         },
         {
-          id: 'cache',
-          icon: 'memory',
-          label: 'Clear your device cache',
+          id: 'history',
+          icon: 'history',
+          label: 'History',
           color: 'blue',
-          action: showCacheDialog,
+          navigate: 'history',
         },
         {
           id: 'logout',
@@ -149,20 +160,12 @@ export default function SettingsPage() {
       header: 'Services',
       items: [
         {
-          id: 'notifications',
-          icon: 'bell',
-          label: 'Notifications',
-          description: '',
-          color: 'royalblue',
-          navigate: "notification",
-        },
-        {
           id: 'updates',
           icon: 'update',
           label: 'Check for updates',
           description: '',
-          color: 'cyan',
-          url: updatesData,
+          color: MD2Colors.blueGrey700,
+          url: "updatesData",
           internet: true,
         },
         {
@@ -206,7 +209,7 @@ export default function SettingsPage() {
           label: 'Share the app',
           description: '',
           color: 'purple',
-          url: shareData,
+          action: shareApp,
           internet: true,
         },
         {
@@ -223,8 +226,7 @@ export default function SettingsPage() {
           icon: 'information',
           label: 'About Us',
           color: 'gray',
-          action: showAboutDialog,
-          internet: true,
+          navigate: "about",
         },
         {
           id: 'terms',
@@ -249,7 +251,6 @@ export default function SettingsPage() {
       ],
     },
   ];
-  
 
   // Handle refresh
   const handleRefresh = () => {
@@ -263,18 +264,13 @@ export default function SettingsPage() {
 
   // Render view based on loading and error state
   const renderView = () => {
-    if (isLoading||isLoadingUser) {
+    if (isLoading || isLoadingUser) {
+      return <LoadingSkeleton />;
+    } else {
       return (
-        <LoadingSkeleton isLoading={isLoading} />
-      );
-    }
-
-
-    return (
-      <ScrollView contentContainerStyle={styles.container} refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} enabled={true} />
-      }>
-        <React.Fragment>
+        <ScrollView contentContainerStyle={styles.container} refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} enabled={true} />
+        }>
           {SECTIONS.map(({ header, items, id }) => (
             <View key={id} style={[styles.section, { backgroundColor: theme.colors.cardsdialogs }]}>
               <List.Section>
@@ -282,7 +278,7 @@ export default function SettingsPage() {
                   {header}
                 </List.Subheader>
                 {items.map(({ id, label, icon, color, action, navigate, description, url, data_route, displaySwitch, switched, onSwitch, internet }) => (
-                  ((isError || isErrorUser || error ) && internet === undefined) || !isError ? (
+                  (internet === undefined || !isError) && (
                     <TouchableRipple
                       key={id}
                       onPress={() => (navigate ? navigation.navigate(navigate, data_route) : url ? Linking.openURL(url) : action())}
@@ -298,15 +294,15 @@ export default function SettingsPage() {
                         right={() => displaySwitch ? <Switch value={switched} onValueChange={onSwitch} ios_backgroundColor="#E5E5EA" /> : null}
                       />
                     </TouchableRipple>
-                  ) : null
+                  )
                 ))}
               </List.Section>
             </View>
           ))}
-        </React.Fragment>
-        <View style={styles.bottomSpacer} />
-      </ScrollView>
-    );
+          <View style={styles.bottomSpacer} />
+        </ScrollView>
+      );
+    }
   };
 
   return (
@@ -316,6 +312,14 @@ export default function SettingsPage() {
           title="Settings"
           titleStyle={{ color: theme.colors.color }}
         />
+        <Appbar.Action
+          icon="bell"
+          iconColor="royalblue"
+          onPress={() => navigation.navigate('notification')}
+        />
+        <Badge style={styles.badge} size={16}>
+          3
+        </Badge>
       </Appbar.Header>
       <SafeAreaView style={{ backgroundColor: theme.colors.background, flex: 1 }}>
         {renderView()}
@@ -323,42 +327,17 @@ export default function SettingsPage() {
           <Dialog visible={logoutDialog} onDismiss={hideLogoutDialog} style={{ backgroundColor: theme.colors.cardsdialogs }}>
             <Dialog.Title style={{ color: theme.colors.color }}>Logout</Dialog.Title>
             <Dialog.Content>
-              <Text variant="titleLarge" style={{ color: theme.colors.color }}>Are you sure you want to logout?</Text>
+              <Text style={{ color: theme.colors.color }}>Are you sure you want to logout?</Text>
             </Dialog.Content>
             <Dialog.Actions>
-              <Button onPress={hideLogoutDialog}>No</Button>
-              <Button onPress={() => { handleLogout(); hideLogoutDialog(); }}>
+              <Button onPress={hideLogoutDialog} style={{ marginRight: 8 }}>No</Button>
+              <Button onPress={() => { handleLogout(); hideLogoutDialog(); }} mode="contained" style={{ backgroundColor: theme.colors.primary }}>
                 Yes
               </Button>
             </Dialog.Actions>
           </Dialog>
         </Portal>
-
-        <Portal>
-          <Dialog visible={cacheDialog} onDismiss={hideCacheDialog} style={{ backgroundColor: theme.colors.cardsdialogs }}>
-            <Dialog.Title style={{ color: theme.colors.color }}>Reset Systems Cache</Dialog.Title>
-            <Dialog.Content>
-              <Text style={[styles.dialogText, { color: theme.colors.color }]}>
-                By resetting the system's cache, you will be automatically logged out from your account and all data stored from the internet will be lost.
-              </Text>
-            </Dialog.Content>
-            <Dialog.Actions>
-              <Button onPress={hideCacheDialog}>No</Button>
-              <Button onPress={() => { handleClearCache(); hideCacheDialog(); }}>Yes</Button>
-
-            </Dialog.Actions>
-          </Dialog>
-        </Portal>
-
-        <Portal>
-          <Dialog visible={aboutDialog} onDismiss={hideAboutDialog} style={{ backgroundColor: theme.colors.cardsdialogs }}>
-            <Dialog.ScrollArea>
-              <ScrollView contentContainerStyle={styles.aboutDialogContent}>
-                <Text style={{ color: theme.colors.color }}>{aboutData}</Text>
-              </ScrollView>
-            </Dialog.ScrollArea>
-          </Dialog>
-        </Portal>
+    
       </SafeAreaView>
     </SafeAreaProvider>
   );
@@ -387,5 +366,10 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  badge: {
+    position: 'absolute',
+    bottom: 8,
+    right: 10,
   },
 });

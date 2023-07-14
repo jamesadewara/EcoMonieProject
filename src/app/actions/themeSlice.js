@@ -1,58 +1,45 @@
-import { createSlice } from '@reduxjs/toolkit';
-import { storeThemeValue, getThemeValue } from '../../config';
+import { createSlice } from "@reduxjs/toolkit";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const initialState = {
-  theme: false,
-};
+const initialState = { theme: "light" };
 
-export const themeSlice = createSlice({
-  name: 'theme',
+// Retrieve the theme value from AsyncStorage
+AsyncStorage.getItem("theme")
+  .then((themeValue) => {
+    if (themeValue) {
+      initialState.theme = themeValue;
+    }
+  })
+  .catch((error) => {
+    console.error("Error retrieving theme:", error);
+    // Handle the error appropriately (e.g., show an error message)
+  });
+
+const themeSlice = createSlice({
+  name: "theme",
   initialState,
   reducers: {
+    clearTheme: (state) => {
+      state.theme = "light";
+      AsyncStorage.removeItem("theme")
+        .catch((error) => {
+          console.error("Error clearing theme:", error);
+          // Handle the error appropriately (e.g., show an error message)
+        });
+    },
     setTheme: (state, action) => {
       state.theme = action.payload;
-      storeThemeValue(String(action.payload))
+      AsyncStorage.setItem("theme", action.payload)
+        .catch((error) => {
+          console.error("Error setting theme:", error);
+          // Handle the error appropriately (e.g., show an error message)
+        });
     },
   },
 });
 
-export const { setTheme } = themeSlice.actions;
+export const { setTheme, clearTheme } = themeSlice.actions;
 
 export default themeSlice.reducer;
 
-
 export const selectCurrentTheme = (state) => state.theme.theme;
-
-// import { createSlice } from '@reduxjs/toolkit';
-// import { storeThemeValue, getThemeValue } from '../../config';
-// import { useSelector } from 'react-redux';
-
-
-// Update the theme slice to fetch the theme value as a boolean
-// export const themeSlice = createSlice({
-//   name: 'theme',
-//   initialState:{
-//     theme: false,
-//   },
-//   reducers: {
-//     setTheme: (state, action) => {
-//       state.theme = action.payload;
-//       storeThemeValue(String(action.payload)); // Store the theme value as a string
-//     },
-//     fetchThemeValue: async (state) => {
-//       const themeValue = await getThemeValue(); // Fetch the theme value as a boolean
-//       state.theme = themeValue;
-//     },
-//   },
-// });
-
-// export const { setTheme, fetchThemeValue } = themeSlice.actions;
-
-// export const selectCurrentTheme = (state) => useSelector(state.theme.theme)||fetchThemeValue();
-
-// export default themeSlice.reducer;
-// Usage: selectCurrentTheme(state)
-// Returns: The current theme value (boolean) from the state
-
-// Usage example:
-// const currentTheme = useSelector(selectCurrentTheme);

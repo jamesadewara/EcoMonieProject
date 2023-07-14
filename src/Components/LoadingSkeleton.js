@@ -1,10 +1,12 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { ActivityIndicator } from 'react-native-paper';
+import { ActivityIndicator,  useTheme  } from 'react-native-paper';
 
 const LoadingSkeleton = ({ isLoading }) => {
+  const theme = useTheme();
+
   return (
-    <View style={styles.loadingContainer}>
+    <View style={[styles.loadingContainer,{backgroundColor: theme.colors.background}]}>
         <ActivityIndicator animate={isLoading} size={50} />
     </View>
   )

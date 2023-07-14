@@ -9,9 +9,10 @@ export const settingsServerApi = apiSlice.injectEndpoints({
       Authorization: `Bearer ${accessToken}`, // Replace `accessToken` with the actual user's authentication token
                 'Content-Type': 'application/json',
       },}),
-      keepUnusedDataFor: 10000,
-      }),
-  })
+      // keepUnusedDataFor: 10000,
+    }),
+  }),
+  overrideExisting: true,
 })
 
 

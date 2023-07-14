@@ -7,9 +7,8 @@ import ErrorPage from '../../../Components/ErrorPage';
 import ChatList from '../../../Components/ChatList';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { selectCurrentToken } from '../../../app/actions/authSlice';
-import { useGetPartnersQuery } from '../../../app/services/features/partnersApiServer';
 import { useGetUserQuery } from '../../../app/services/registration/signupApiSlice';
-// import { useGetProfileQuery } from '../../../app/services/features/usersProfileApi';
+import SetupProfile from '../../../Components/SetupProfile';
 
 
 const partners = [
@@ -40,14 +39,20 @@ const ApprovalPage = () => {
   // console.log(userInfo,"userinfostardoy",partners)
 
   const renderView = () => {
-    // if (isErrorUser) {
-    //   return <ErrorPage handleRefresh={handleRefresh} />;
-    // }
+    if (!userInfo?.is_buyer || !userInfo?.is_seller) {
+      return <SetupProfile />
+    }
+
+    if (!userInfo?.is_buyer || !userInfo?.is_seller) {
+      return <SetupProfile />
+    }
+
     if (isLoadingUser) {
       return (
         <LoadingSkeleton isLoading={true} />
       );
     }
+
 
     return (
       <View>

@@ -20,15 +20,16 @@ const SplashPage = () => {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      if (accessToken) {
+      if (!accessToken) {
         navigation.replace('intro');
       } else {
         dispatch(authValid(true));
       }
     }, 5000);
-
+  
     return () => clearInterval(interval);
-  }, []);
+  }, [accessToken]);
+  
 
   useEffect(() => {
     Animated.loop(

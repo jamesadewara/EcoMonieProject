@@ -4,13 +4,13 @@ import { SafeAreaView, Text, TouchableOpacity, ImageBackground, ScrollView, View
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Searchbar, Appbar, useTheme } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
-import { useGetProductsQuery } from '../../../../app/services/features/productServerApi';
-import { useGetCategoryQuery } from '../../../../app/services/features/productsCategoryServerApi';
+
 import { selectCurrentToken } from '../../../../app/actions/authSlice';
 import { useSelector } from 'react-redux';
 import { useGetSettingsQuery } from '../../../../app/services/features/settingsServerApi';
 import { ProductList, CategoryList } from '../../../../Components/ProductCard'; // Assuming ProductList and CategoryList are exported from the mentioned path
 import { useGetUserQuery } from '../../../../app/services/registration/signupApiSlice';
+import { useGetCategoryQuery, useGetProductsQuery } from '../../../../app/services/features/productServerApi';
 
 // Sample data for category and product
 const categoryData = [

@@ -1,27 +1,38 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Text, Alert, Platform } from 'react-native';
-import { Button, TextInput, HelperText, Appbar, IconButton, useTheme, Checkbox } from 'react-native-paper';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Text, Platform } from 'react-native';
+import { Button, TextInput, HelperText, Appbar, useTheme, Checkbox } from 'react-native-paper';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import NetInfo from '@react-native-community/netinfo';
-import CustomAvatar from '../../../../../Components/CustomAvatar';
-import * as ImagePicker from 'expo-image-picker';
-import * as ImageManipulator from 'expo-image-manipulator';
-import { MD2Colors } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
+import { useGetUserQuery, useRegisterassellerMutation, useUpdatesellerMutation } from '../../../../../app/services/registration/signupApiSlice';
+import { useSelector } from 'react-redux';
+import { selectCurrentToken } from '../../../../../app/actions/authSlice';
+import { useGetSettingsQuery } from '../../../../../app/services/features/settingsServerApi';
+import CustomAlert from '../../../../../Components/CustomAlert';
+import ImageDialog from '../../../../../Components/MessageDialog';
 
-const SellerRegistrationForm = () => {
+const SellerRegistrationForm = ({ route }) => {
   const navigation = useNavigation();
-  const [businessProfilePic, setBusinessProfilePic] = useState(null);
-  const [companyName, setCompanyName] = useState('');
-  const [businessAddress, setBusinessAddress] = useState('');
-  const [businessPhoneNumber, setBusinessPhoneNumber] = useState('');
-  const [about, setAbout] = useState('');
+  const theme = useTheme();
+  const [formSubmitted, setFormSubmitted] = useState(false);
   const [paypalEmail, setPaypalEmail] = useState('');
+  const [address, setAddress] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [about, setAbout] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isConnected, setIsConnected] = useState(true);
   const [acceptTerms, setAcceptTerms] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
+  const [showImageDialog, setShowImageDialog] = useState(false);
+  const [dialogTitle, setDialogTitle] = useState('');
+  const [dialogMessage, setDialogMessage] = useState('');
+  const [dialogStatus, setDialogStatus] = useState('');
+  const [registerasseller] = useRegisterassellerMutation();
+  const [updateseller] = useUpdatesellerMutation();
+  const accessToken = useSelector(selectCurrentToken);
 
-  const theme = useTheme();
+  const { data: userInfo, isLoadingUser, isError, refetch } = useGetUserQuery({ accessToken });
+  const { data: settings, isLoadingSettings, isErrorSettings, refetch: refetchSetiings } = useGetSettingsQuery({ accessToken });
 
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener((state) => {
@@ -36,117 +47,142 @@ const SellerRegistrationForm = () => {
     };
   }, []);
 
-  const handleAvatarSelection = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert(
-        'Permission required',
-        'Permission to access the media library is required!'
-      );
-      return;
-    }
+  const handleSellerRegistration = async () => {
+    try {
+      setIsLoading(true);
+      setAlertMessage('Creating your profile');
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1,
-    });
-
-    if (!result.cancelled) {
-      const manipResult = await ImageManipulator.manipulateAsync(
-        result.uri,
-        [{ crop: { originX: 0, originY: 0, width: result.width, height: result.height } }],
-        { compress: 1, format: ImageManipulator.SaveFormat.PNG }
-      );
-      setBusinessProfilePic(manipResult.uri);
+      if (route.params?.update) {
+        await updateseller({
+          accessToken,
+          id: userInfo?.id,
+          user: userInfo?.id,
+          paypal_email: paypalEmail,
+          paypal_access_token: 'your token',
+          address,
+          phone_number: phoneNumber,
+          about,
+        });
+        navigation.goBack();
+      } else {
+        await registerasseller({
+          accessToken,
+          user: userInfo?.id,
+          paypal_email: paypalEmail,
+          paypal_access_token: 'your token',
+          address,
+          phone_number: phoneNumber,
+          about,
+        });
+        navigation.replace('hurray');
+      }
+    } catch (error) {
+      setAlertMessage('Rolling back changes');
+      console.log('Buyer registration failed:', error);
+      setDialogTitle('Profile Update Failed');
+      setDialogMessage(error.message);
+      setDialogStatus('error');
+      setShowImageDialog(true);
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  const validateEmail = (value) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  };
+
   const handleSubmit = () => {
-    if (!businessAddress || !businessPhoneNumber || !acceptTerms) {
-      return;
+    if (!route.params?.update) {
+      setFormSubmitted(true);
+
+      if (!paypalEmail || !address || !phoneNumber || !acceptTerms) {
+        return;
+      }
     }
 
-    console.log('Form submitted!');
-    console.log('Business Profile Pic:', businessProfilePic);
-    console.log('Company Name:', companyName);
-    console.log('Business Address:', businessAddress);
-    console.log('Business Phone Number:', businessPhoneNumber);
-    console.log('About:', about);
-    console.log('Paypal Email:', paypalEmail);
+    handleSellerRegistration();
   };
 
   return (
     <SafeAreaProvider>
+      <CustomAlert visible={isLoading} message={alertMessage} backgroundColor={theme.colors.cardsdialogs} color={theme.colors.color} />
       <Appbar.Header style={{ backgroundColor: theme.colors.appbar }}>
-        <Appbar.BackAction
-          iconColor={theme.colors.color}
-          onPress={() => navigation.goBack()}
-        />
-        <Appbar.Content title="Profile" titleStyle={{ color: theme.colors.color }} />
+        <Appbar.BackAction iconColor={theme.colors.color} onPress={() => navigation.goBack()} />
+        <Appbar.Content title="Seller's Profile" titleStyle={{ color: theme.colors.color }} />
       </Appbar.Header>
-        <ScrollView style={{ backgroundColor: theme.colors.background, flex: 1 }}>
-          <View style={styles.avatarContainer}>
-            <View style={styles.avatarWrapper}>
-              <CustomAvatar size={150} avatar={businessProfilePic} />
-              <View style={styles.cameraIconWrapper}>
-                <IconButton
-                  icon="camera"
-                  color="white"
-                  style={styles.cameraIcon}
-                  onPress={handleAvatarSelection}
-                />
-              </View>
-            </View>
-          </View>
+      <ScrollView style={{ backgroundColor: theme.colors.background }}>
+        <View style={{ flex: 1 }}>
           <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
             <View style={styles.formContainer}>
               <TextInput
-                label="Company Name"
-                value={companyName}
-                placeholder="Company Name"
-                onChangeText={text => setCompanyName(text)}
-                outlineColor={MD2Colors.green500}
+                label="Paypal Email"
+                value={paypalEmail}
+                placeholder="Your Paypal Email"
+                onChangeText={text => setPaypalEmail(text)}
+                outlineColor={theme.colors.primary}
                 selectionColor={theme.colors.color}
                 textColor={theme.colors.color}
-                keyboardType="default"
+                keyboardType="email-address"
                 mode="outlined"
-                left={<TextInput.Icon icon="office-building" />}
+                left={<TextInput.Icon icon="email" />}
               />
-              {!companyName && <HelperText type="error">Please enter your company name</HelperText>}
+              {formSubmitted && paypalEmail.trim() === '' && (
+                <HelperText type="error" visible={paypalEmail.trim() === ''} style={{ marginLeft: 10, marginTop: -2 }}>
+                  Please enter your Paypal Email address
+                </HelperText>
+              )}
+              {formSubmitted && !validateEmail(paypalEmail) && (
+                <HelperText type="error" visible={!validateEmail(paypalEmail)} style={{ marginLeft: 10, marginTop: -8 }}>
+                  Please enter a valid Paypal Email address
+                </HelperText>
+              )}
+            </View>
+            <View style={styles.formContainer}>
               <TextInput
-                label="Business Address"
-                value={businessAddress}
-                placeholder="Business Address"
-                onChangeText={text => setBusinessAddress(text)}
-                outlineColor={MD2Colors.green500}
+                label="Address"
+                value={address}
+                placeholder="Address"
+                onChangeText={text => setAddress(text)}
+                outlineColor={theme.colors.primary}
                 selectionColor={theme.colors.color}
                 textColor={theme.colors.color}
                 keyboardType="default"
                 mode="outlined"
                 left={<TextInput.Icon icon="map-marker" />}
               />
-              {!businessAddress && <HelperText type="error">Please enter your business address</HelperText>}
+              {formSubmitted && address.trim() === '' && (
+                <HelperText type="error" visible={address.trim() === ''} style={{ marginLeft: 10, marginTop: -2 }}>
+                  Please enter your address
+                </HelperText>
+              )}
+            </View>
+            <View style={styles.formContainer}>
               <TextInput
-                label="Business Phone Number"
-                value={businessPhoneNumber}
-                placeholder="Business Phone Number"
-                onChangeText={text => setBusinessPhoneNumber(text)}
-                outlineColor={MD2Colors.green500}
+                label="Phone Number"
+                value={phoneNumber}
+                placeholder="Phone Number"
+                onChangeText={text => setPhoneNumber(text)}
+                outlineColor={theme.colors.primary}
                 selectionColor={theme.colors.color}
                 textColor={theme.colors.color}
                 keyboardType="phone-pad"
                 mode="outlined"
                 left={<TextInput.Icon icon="phone" />}
               />
-              {!businessPhoneNumber && <HelperText type="error">Please enter your business phone number</HelperText>}
+              {formSubmitted && phoneNumber.trim() === '' && (
+                <HelperText type="error" visible={phoneNumber.trim() === ''} style={{ marginLeft: 10, marginTop: -2 }}>
+                  Please enter your phoneNumber
+                </HelperText>
+              )}
+            </View>
+            <View style={styles.formContainer}>
               <TextInput
                 label="Write about yourself"
                 value={about}
                 onChangeText={text => setAbout(text)}
-                outlineColor={MD2Colors.green500}
-                selectionColor={MD2Colors.green700}
+                outlineColor={theme.colors.primary}
+                selectionColor={theme.colors.color}
                 textColor={theme.colors.color}
                 keyboardType="default"
                 multiline
@@ -154,50 +190,50 @@ const SellerRegistrationForm = () => {
                 style={styles.input}
                 left={<TextInput.Icon icon="comment-text" />}
               />
-              <TextInput
-                label="Paypal Email"
-                value={paypalEmail}
-                placeholder="Paypal Email"
-                onChangeText={text => setPaypalEmail(text)}
-                outlineColor={MD2Colors.green500}
-                selectionColor={theme.colors.color}
-                textColor={theme.colors.color}
-                keyboardType="email-address"
-                mode="outlined"
-                left={<TextInput.Icon icon="email" />}
-              />
-              <View style={styles.checkboxContainer}>
-                <Checkbox
-                  status={acceptTerms ? 'checked' : 'unchecked'}
-                  onPress={() => setAcceptTerms(!acceptTerms)}
-                  color={theme.colors.primary}
-                />
-                <Text style={[styles.checkboxLabel, { color: theme.colors.color }]}>
-                  Accept our terms and conditions
-                </Text>
-              </View>
-              <Button
-                mode="text"
-                onPress={() => {
-                  // Navigate to terms and conditions screen
-                  navigation.navigate('terms');
-                }}
-              >
-                View Terms and Conditions
-              </Button>
+              {!route.params?.update && (
+                <View>
+                  <View style={styles.checkboxContainer}>
+                    <Checkbox
+                      status={acceptTerms ? 'checked' : 'unchecked'}
+                      onPress={() => setAcceptTerms(!acceptTerms)}
+                      color={theme.colors.primary}
+                    />
+                    <Text style={[styles.checkboxLabel, { color: theme.colors.color }]}>
+                      Accept our terms and conditions
+                    </Text>
+                  </View>
+                  <Button
+                    mode="text"
+                    onPress={() => {
+                      navigation.navigate('terms', { page: "Terms & Conditions", link: settings?.terms_and_service });
+                    }}
+                  >
+                    View Terms and Conditions
+                  </Button>
+                </View>
+              )}
               <Button
                 mode="contained"
-                onPress={handleSubmit}
-                style={[styles.submitButton, { backgroundColor: MD2Colors.green500 }]}
+                onPress={() => handleSubmit()}
+                style={[styles.submitButton, { backgroundColor: theme.colors.primary }]}
                 loading={isLoading}
-                disabled={!isConnected || isLoading || !acceptTerms}
+                disabled={!isConnected || isLoading || (!route.params?.update && !acceptTerms)}
               >
-                Submit
+                {route.params?.update ? 'Update' : 'Submit'}
               </Button>
             </View>
           </KeyboardAvoidingView>
-        </ScrollView>
-
+        </View>
+      </ScrollView>
+      <ImageDialog
+        status={dialogStatus}
+        title={dialogTitle}
+        message={dialogMessage}
+        backgroundColor={theme.colors.cardsdialogs}
+        color={theme.colors.color}
+        visible={showImageDialog}
+        onDismiss={() => setShowImageDialog(false)}
+      />
     </SafeAreaProvider>
   );
 };
@@ -208,25 +244,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   formContainer: {
-    flex: 1,
-  },
-  avatarContainer: {
-    alignItems: 'center',
-    marginTop: 24,
-    marginBottom: 16,
-  },
-  avatarWrapper: {
-    position: 'relative',
-  },
-  cameraIconWrapper: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    backgroundColor: MD2Colors.green500,
-    borderRadius: 20,
-  },
-  cameraIcon: {
-    margin: 4,
+    marginBottom: 20,
   },
   input: {
     marginBottom: 12,
@@ -243,7 +261,6 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     marginTop: 16,
-    backgroundColor: MD2Colors.green500,
   },
 });
 

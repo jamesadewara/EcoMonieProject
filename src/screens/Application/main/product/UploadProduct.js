@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, View, Image, KeyboardAvoidingView, Text, TouchableOpacity, Alert } from 'react-native';
-import { Appbar, IconButton, TextInput, Button, Snackbar, Portal, Provider, Modal,useTheme, MD2Colors } from 'react-native-paper';
+import { SafeAreaView, ScrollView, StyleSheet, View, Image, KeyboardAvoidingView, TouchableOpacity, Alert } from 'react-native';
+import { Appbar, IconButton, TextInput, Button, useTheme } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
@@ -8,16 +8,15 @@ import Swiper from 'react-native-swiper';
 import NetInfo from '@react-native-community/netinfo';
 import { useNavigation } from '@react-navigation/native';
 
-import { useGetCategoryQuery } from '../../../../app/services/features/productsCategoryServerApi';
-
 import { selectCurrentToken } from '../../../../app/actions/authSlice';
 import { useSelector } from 'react-redux';
-import ModalWithList from '../../../../Components/ModalWithList';
-import { useCreateProductMutation, useCreateProductImgMutation, useGetProductsQuery } from '../../../../app/services/features/productServerApi';
+import ConfirmationDialog from '../../../../Components/ConfirmationDialog';
+import { useCreateProductMutation, useGetCategoryQuery } from '../../../../app/services/features/productServerApi';
 import CustomAlert from '../../../../Components/CustomAlert';
+
 import { Styles } from '../../../../css/design';
 import { useGetUserQuery } from '../../../../app/services/registration/signupApiSlice';
-
+import ImageDialog from '../../../../Components/MessageDialog';
 
 const SwiperComponent = ({ imgs }) => {
   return (
@@ -40,18 +39,18 @@ const SwiperComponent = ({ imgs }) => {
         borderRadius: 10,
       }}
     >
-      {imgs && imgs.length > 0 ? (
-        imgs.map((data, index) => (
-          <View style={styles.slide} key={index}>
-            <Image source={{ uri: data.uri }} style={{ height: '100%', width: '100%' }} />
-          </View>
-        ))
-      ) : null}
+      {imgs && imgs.length > 0
+        ? imgs.map((data, index) => (
+            <View style={styles.slide} key={index}>
+              <Image source={{ uri: data.uri }} style={{ height: '100%', width: '100%' }} />
+            </View>
+          ))
+        : null}
     </Swiper>
   );
 };
 
-const UploadProductPage = ({ route }) => {
+const UploadProductPage = () => {
   const navigation = useNavigation();
   const [appendImages, setAppendImages] = useState([]);
   const [currentIndx, setCurrentIndx] = useState(0);
@@ -61,22 +60,21 @@ const UploadProductPage = ({ route }) => {
   const [description, setDescription] = useState('');
   const [isConnected, setIsConnected] = useState(true);
   const [category, setCategory] = useState('');
+
+  const [showImageDialog, setShowImageDialog] = useState(false);
+  const [dialogTitle, setDialogTitle] = useState('');
+  const [dialogMessage, setDialogMessage] = useState('');
+  const [dialogStatus, setDialogStatus] = useState('');
+
+  const [alertMessage, setAlertMessage] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState([]);
-  const [uploadedImgList, setUploadedImgList] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [createProduct] = useCreateProductMutation();
-  const [createProductImg] = useCreateProductImgMutation();
 
   const accessToken = useSelector(selectCurrentToken);
-  const { data: categories, isLoadingCategories, isErrorCategories, errorCategories } = useGetCategoryQuery({ accessToken });
-    // Query for getting user info
-    const {
-      data: userInfo = [],
-      isLoading: isLoadingUser,
-      isError: isErrorUser,
-      refetch: userRefetch,
-    } = useGetUserQuery({ accessToken });
+  const { data: categories, isLoading: isLoadingCategories, isError: isErrorCategories, error: errorCategories } = useGetCategoryQuery({ accessToken });
+  const { data: userInfo = [], isLoading: isLoadingUser, isError: isErrorUser, refetch: userRefetch } = useGetUserQuery({ accessToken });
   const theme = useTheme();
 
   useEffect(() => {
@@ -114,13 +112,16 @@ const UploadProductPage = ({ route }) => {
 
   const handleOpenCamera = async () => {
     if (appendImages.length >= 5) {
-      Alert.alert('Maximum Image Reached', 'You can only add up to 5 images.');
+      setDialogTitle('Maximum Image Reached');
+      setDialogMessage('You can only add up to 5 images.');
+      setDialogStatus('error');
+      setShowImageDialog(true);
       return;
     }
 
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      alert('Permission to access media library is required!');
+      Alert.alert('Permission Required', 'Permission to access media library is required!');
       return;
     }
 
@@ -151,87 +152,85 @@ const UploadProductPage = ({ route }) => {
       updatedImages.splice(index, 1);
       return updatedImages;
     });
-
-    setCurrentIndx((prevIndex) => {
-      if (prevIndex > 0 && prevIndex === index) {
-        return prevIndex - 1;
-      }
-      return prevIndex;
-    });
-  };
-
-  const handleImgUpload = async () => {
-    const formData = new FormData();
-
-    appendImages.forEach((image, index) => {
-      const file = {
-        uri: image.uri,
-        name: `image_${index + 1}.png`,
-        type: 'image/png',
-      };
-
-      formData.append(`image_${index + 1}`, file);
-    });
-
-    try {
-      const img = formData;
-      const payload = { img, accessToken };
-      const uplProImgReq = await createProductImg(payload);
-      return uplProImgReq.data.image_ids
-      setUploadedImgList(uplProImgReq.data.image_ids);
-      console.log('uploaded imgs successfully');
-    } catch (error) {
-      // Handle error
-      return []
-
-      setUploadedImgList([]);
-    }
   };
 
   const handleUpload = async () => {
-    // Perform the action when the button is pressed
-    const img_list= await handleImgUpload();
-    console.log(img_list, 'cross check it')
-    try {
-      const name = trashName;
-      const ordered = false;
-      const payload = {
-        user:userInfo.id,
-        name,
-        price,
-        image: img_list,
-        category: category.id,
-        description,
-        accessToken,
-        ordered,
-      };
-      const uplProReq = await createProduct(payload);
-      console.log(uplProReq, 'test');
-      console.log(payload, 'test');
-      Alert.alert('Upload Successful', 'Your upload was successful.');
-      //if no errors
-      console.log(userInfo);
-      navigation.goBack()
-
-    } catch (error) {
-      if (error.status === 'FETCH_ERROR') {
-        Alert.alert('Network Error', 'Please check your internet connection.');
-      } else {
-        Alert.alert('Upload Error', 'Something went wrong, please try again later.');
-      }
-      
+    setIsLoading(true);
+    setAlertMessage("Uploading...")
+    if (appendImages.length === 0) {
+      setDialogTitle('No Images');
+      setDialogMessage('Please select at least one image.');
+      setDialogStatus('error');
+      setShowImageDialog(true);
+      return;
     }
-  };
+    console.log(category.id, 'kiop')
+  
+    const formData = new FormData();
+    formData.append('seller', userInfo?.id);
+    formData.append('title', trashName);
+    formData.append('description', description);
+    formData.append('price', price);
+    formData.append('category', category?.id);
+
+
+    appendImages.forEach((file, index) => {
+      formData.append(`images`, {
+        uri: file.uri,
+        name: `image_${index}.png`,
+        type: 'image/png',
+      });
+    });
+    
+
+    console.log(formData, 'payload');
+
+  
+    try {
+      const response = await createProduct(formData);
+
+      //if the timeout reaches
+      try{
+        if (response.error.status == "AbortError" ) {
+            setDialogTitle('Abort Error');
+            setDialogMessage('Timeout reached. could not fetch resources try again.');
+            setShowImageDialog(true);
+        }
+      }
+      catch{}
+ 
+      console.log(response);
+      //go back
+      navigation.goBack()
+    } catch (error) {
+      console.log(error)
+        if (error.status === 'FETCH_ERROR') {
+          setDialogTitle('Network Error');
+          setDialogMessage('Please check your internet connection.');
+          setDialogStatus('nointernet');
+          setShowImageDialog(true);
+        } else {
+          setDialogTitle('Whoops!');
+          setDialogMessage('Something went wrong, please try again later.');
+          setDialogStatus('nointernet');
+          setShowImageDialog(true);
+        }
+      }
+      setIsLoading(false);
+    }
+  
+
 
   const handleUploadProduct = async () => {
     if (appendImages.length === 0) {
-      Alert.alert('No Images', 'Please select at least one image.');
-      setIsLoading(false);
+      setDialogTitle('No Images');
+      setDialogMessage('Please select at least one image.');
+      setDialogStatus('error');
+      setShowImageDialog(true);
       return;
     }
-    setIsLoading(true);
+
     await handleUpload();
-    setIsLoading(false);
   };
 
   const chooseCateg = () => {
@@ -242,59 +241,42 @@ const UploadProductPage = ({ route }) => {
     setModalVisible(false);
   };
 
-  if (isLoadingCategories) {
-    return <CustomAlert visible={true} message="Loading categories..." />;
-  }
-
-  if (isErrorCategories) {
-    return <CustomAlert visible={true} message={`Error: ${errorCategories}`} />;
-  }
-
-  if (isErrorUser) {
-    return <CustomAlert visible={true} message="Error loading user info" />;
-  }
-
-  // Check if user info is still loading
-  if (isLoadingUser) {
-    return <CustomAlert visible={true} message="Loading user info..." />;
-  }
+  const handleConnectionAlert = () => {
+    setDialogTitle('Not Connected');
+    setDialogMessage('You are currently not connected to the internet. Please check your internet connection and try again.');
+    setDialogStatus('nointernet');
+    setShowImageDialog(true);
+  };
 
   return (
     <SafeAreaProvider>
       <Appbar.Header style={{ backgroundColor: theme.colors.appbar }}>
         <Appbar.BackAction onPress={() => navigation.goBack()} iconColor={theme.colors.color} />
-        <Appbar.Content
-          title="Upload Trash"
-          titleStyle={{ color: theme.colors.color }}
-        />
+        <Appbar.Content title="Upload Trash" titleStyle={{ color: theme.colors.color }} />
       </Appbar.Header>
 
-      <Portal>
-        <ModalWithList
-          backgroundColor={theme.colors.cardsdialogs}
-          color={theme.colors.color}
-          visible={modalVisible}
-          onDismiss={closeModal}
-          categories={categories}
-          setValue={setCategory}
-          selectedCategories={selectedCategories}
-          onSelectCategory={handleCategorySelect}
-        />
-      </Portal>
-      <CustomAlert visible={isLoading} message="Loading..." />
-      <ScrollView style={{backgroundColor: theme.colors.background}}>
+      <ConfirmationDialog
+        visible={modalVisible}
+        onDismiss={closeModal}
+        categories={categories}
+        setValue={setCategory}
+        selectedCategories={selectedCategories}
+        onSelectCategory={handleCategorySelect}
+      />
+      <CustomAlert visible={isLoading} message={alertMessage} backgroundColor={theme.colors.cardsdialogs} color={theme.colors.color} />
+      <ScrollView style={{ backgroundColor: theme.colors.background }}>
         <View style={{ backgroundColor: theme.colors.cardsdialogs, height: 300, width: '90%', margin: 30, borderRadius: 50, alignSelf: 'center' }}>
           <View style={styles.container}>
             {appendImages.length > 0 && <SwiperComponent key={swiperKey} imgs={appendImages} />}
             {appendImages.length > 0 && (
               <IconButton
                 icon="close"
-                iconColor="#aaa"
-                style={styles.removeButton}
+                iconColor={theme.colors.background}
+                style={[styles.removeButton, { backgroundColor: theme.colors.color }]}
                 onPress={() => handleRemoveImage(currentIndx)}
               />
             )}
-            <IconButton icon="camera" style={styles.iconButton} onPress={handleOpenCamera} />
+            <IconButton icon="camera" iconColor={theme.colors.background} style={[styles.iconButton, { backgroundColor: theme.colors.color }]} onPress={isConnected ? handleOpenCamera : handleConnectionAlert} />
           </View>
         </View>
         <View style={{ marginVertical: 30, alignSelf: 'center' }}>
@@ -303,8 +285,8 @@ const UploadProductPage = ({ route }) => {
             <TextInput
               label="Trash Name"
               mode="outlined"
-              outlineColor={MD2Colors.green500}
-              selectionColor={MD2Colors.green700}
+              outlineColor={theme.colors.green500}
+              selectionColor={theme.colors.green700}
               textColor={theme.colors.color}
               style={[Styles.mb2]}
               placeholder="Trash Name*"
@@ -318,12 +300,12 @@ const UploadProductPage = ({ route }) => {
               <TextInput
                 label="Category"
                 mode="outlined"
-                outlineColor={MD2Colors.green500}
-              selectionColor={MD2Colors.green700}
-              textColor={theme.colors.color}
-              style={[Styles.mb2]}
+                outlineColor={theme.colors.green500}
+                selectionColor={theme.colors.green700}
+                textColor={theme.colors.color}
+                style={[Styles.mb2]}
                 placeholder="Category*"
-                value={category.title}
+                value={category?.name}
                 keyboardType="default"
                 onChangeText={setCategory}
                 editable={false}
@@ -334,23 +316,22 @@ const UploadProductPage = ({ route }) => {
             <TextInput
               label="Price"
               mode="outlined"
-              outlineColor={MD2Colors.green500}
-              selectionColor={MD2Colors.green700}
+              outlineColor={theme.colors.green500}
+              selectionColor={theme.colors.green700}
               textColor={theme.colors.color}
               style={[Styles.mb2]}
               placeholder="Price NGN"
               value={price}
               keyboardType="decimal-pad"
               onChangeText={setPrice}
-       
             />
 
             {/* Description */}
             <TextInput
               label="Description"
               mode="outlined"
-              outlineColor={MD2Colors.green500}
-              selectionColor={MD2Colors.green700}
+              outlineColor={theme.colors.green500}
+              selectionColor={theme.colors.green700}
               textColor={theme.colors.color}
               style={[Styles.mb2]}
               placeholder="Description*"
@@ -361,22 +342,21 @@ const UploadProductPage = ({ route }) => {
           </KeyboardAvoidingView>
         </View>
         <View style={[styles.container, { marginBottom: 100 }]}>
-          <Button
-            mode="contained"
-            style={{ width: 100, alignSelf: 'center' }}
-            onPress={handleUploadProduct}
-            disabled={!isConnected || trashName.trim() === '' || price.trim() === ''}
-          >
+          <Button mode="contained" style={{ width: 100, alignSelf: 'center' }} onPress={isConnected ? handleUploadProduct : handleConnectionAlert}>
             Submit
           </Button>
         </View>
       </ScrollView>
 
-      {!isConnected && (
-        <Snackbar visible={!isConnected} onDismiss={() => {}}>
-          No internet connection. Please check your network settings.
-        </Snackbar>
-      )}
+      <ImageDialog
+        status={dialogStatus}
+        title={dialogTitle}
+        message={dialogMessage}
+        backgroundColor={theme.colors.cardsdialogs}
+        color={theme.colors.color}
+        visible={showImageDialog}
+        onDismiss={() => setShowImageDialog(false)}
+      />
     </SafeAreaProvider>
   );
 };

@@ -1,10 +1,10 @@
 import { useNavigation } from '@react-navigation/native';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, Image, StyleSheet, ScrollView } from 'react-native';
 import { Appbar, useTheme, List } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { selectCurrentToken } from '../../../../../app/actions/authSlice';
-import { useGetBuyerQuery, useGetUserQuery } from '../../../../../app/services/registration/signupApiSlice';
+import { useGetBuyerQuery, useGetSellerQuery, useGetUserQuery } from '../../../../../app/services/registration/signupApiSlice';
 import { useSelector } from 'react-redux';
 import LoadingSkeleton from '../../../../../Components/LoadingSkeleton';
 
@@ -21,8 +21,18 @@ const CheckoutPage = () => {
   const id = userInfo?.id;
 
   const { data: buyerInfo, isLoading: isLoadingBuyer, isError: isErrorBuyer, refetch: refetchBuyer } = useGetBuyerQuery({ accessToken, id });
-  const { data: sellerInfo, isLoading: isLoadingSeller, isError: isErrorSeller, refetch: refetchSeller } = useGetBuyerQuery({ accessToken, id });
-  console.log(buyerInfo);
+  const { data: sellerInfo, isLoading: isLoadingSeller, isError: isErrorSeller, refetch: refetchSeller } = useGetSellerQuery({ accessToken, id });
+
+  // useEffect to refetch the buyerInfo or sellerInfo based on changes in userInfo
+  useEffect(() => {
+    if (userInfo?.is_buyer) {
+      refetchBuyer();
+    } else if (userInfo?.is_seller) {
+      refetchSeller();
+    }
+  }, [userInfo]);
+
+  console.log(userInfo);
 
   if (isLoadingUser || (userInfo?.is_buyer ? isLoadingBuyer : isLoadingSeller)) {
     return <LoadingSkeleton isLoading={true} />;
@@ -32,15 +42,16 @@ const CheckoutPage = () => {
     <SafeAreaProvider>
       {/* Appbar */}
       <Appbar.Header style={{ backgroundColor: theme.colors.appbar }}>
-        <Appbar.BackAction onPress={() => userInfo?.is_buyer ? navigation.goBack("register_buyer", { 'update': true }) : navigation.goBack("register_seller", { 'update': true })} color={theme.colors.color} />
+        <Appbar.BackAction onPress={() => navigation.goBack()} color={theme.colors.color} />
         <Appbar.Content title="My Profile" titleStyle={{ color: theme.colors.color }} />
-        <Appbar.Action icon="pen" iconColor={theme.colors.color} onPress={() => navigation.navigate('main')} />
+        <Appbar.Action icon="pen" iconColor={theme.colors.color} onPress={() => userInfo?.is_buyer ? navigation.navigate("register_buyer", { 'update': true }) : navigation.navigate("register_seller", { 'update': true })} />
       </Appbar.Header>
+
 
       <ScrollView contentContainerStyle={[styles.container, { backgroundColor: theme.colors.background }]}>
         <View style={styles.contentContainer}>
           {/* User Profile Picture */}
-          <Image source={{ uri: userInfo?.is_buyer ? buyerInfo?.profile_pic : sellerInfo?.profile_pic }} style={[styles.profilePicture, { backgroundColor: theme.colors.appbar }]} />
+          <Image source={{ uri: userInfo?.profile_pic }} style={[styles.profilePicture, { backgroundColor: theme.colors.appbar }]} />
 
           {/* User Section */}
           <Text style={[styles.title, { color: theme.colors.color }]}>User</Text>
@@ -67,48 +78,110 @@ const CheckoutPage = () => {
             />
           </List.Section>
 
-          {/* Business Section */}
-          <Text style={[styles.title, { color: theme.colors.color }]}>Business: {userInfo?.is_buyer ? "Buyer" : userInfo?.is_seller ? "Seller" : "Buy & Sell"}</Text>
-
+          {/* Buyer-specific content */}
           {userInfo?.is_buyer && (
-            <List.Section>
-              {/* Address */}
-              <List.Item
-                style={[styles.listItem, { backgroundColor: theme.colors.cardsdialogs }]}
-                titleStyle={{ color: theme.colors.color, fontWeight: 'bold' }}
-                descriptionStyle={{ color: theme.colors.color }}
-                description={buyerInfo?.address}
-                title="Address"
-                left={() => <List.Icon icon="map-marker" color={theme.colors.color} />}
-              />
+            <React.Fragment>
+              {/* Business Section */}
+              <Text style={[styles.title, { color: theme.colors.color }]}>Business: Buyer</Text>
 
-              {/* About */}
-              <List.Item
-                style={[styles.listItem, { backgroundColor: theme.colors.cardsdialogs }]}
-                titleStyle={{ color: theme.colors.color, fontWeight: 'bold' }}
-                descriptionStyle={{ color: theme.colors.color }}
-                description={buyerInfo?.about}
-                title="About"
-                left={() => <List.Icon icon="information" color={theme.colors.color} />}
-              />
+              <List.Section>
 
-              {/* Phone Number */}
-              <List.Item
-                style={[styles.listItem, { backgroundColor: theme.colors.cardsdialogs }]}
-                titleStyle={{ color: theme.colors.color, fontWeight: 'bold' }}
-                descriptionStyle={{ color: theme.colors.color }}
-                description={buyerInfo?.phone_number}
-                title="Phone Number"
-                left={() => <List.Icon icon="phone" color={theme.colors.color} />}
-              />
-            </List.Section>
+                {/* Company's Name */}
+                <List.Item
+                  style={[styles.listItem, { backgroundColor: theme.colors.cardsdialogs }]}
+                  titleStyle={{ color: theme.colors.color, fontWeight: 'bold' }}
+                  descriptionStyle={{ color: theme.colors.color }}
+                  description={buyerInfo?.company_name}
+                  title="Company's Name"
+                  left={() => <List.Icon icon="business" color={theme.colors.color} />}
+                />
+
+                {/* Address */}
+                <List.Item
+                  style={[styles.listItem, { backgroundColor: theme.colors.cardsdialogs }]}
+                  titleStyle={{ color: theme.colors.color, fontWeight: 'bold' }}
+                  descriptionStyle={{ color: theme.colors.color }}
+                  description={buyerInfo?.address}
+                  title="Address"
+                  left={() => <List.Icon icon="map-marker" color={theme.colors.color} />}
+                />
+
+                {/* Phone Number */}
+                <List.Item
+                  style={[styles.listItem, { backgroundColor: theme.colors.cardsdialogs }]}
+                  titleStyle={{ color: theme.colors.color, fontWeight: 'bold' }}
+                  descriptionStyle={{ color: theme.colors.color }}
+                  description={buyerInfo?.phone_number}
+                  title="Phone Number"
+                  left={() => <List.Icon icon="phone" color={theme.colors.color} />}
+                />
+
+                {/* About */}
+                <List.Item
+                  style={[styles.listItem, { backgroundColor: theme.colors.cardsdialogs }]}
+                  titleStyle={{ color: theme.colors.color, fontWeight: 'bold' }}
+                  descriptionStyle={{ color: theme.colors.color }}
+                  description={buyerInfo?.about}
+                  title="About"
+                  left={() => <List.Icon icon="information" color={theme.colors.color} />}
+                />
+
+                
+              </List.Section>
+            </React.Fragment>
           )}
 
-          {/* Add seller-specific content here */}
+          {/* Seller-specific content */}
           {userInfo?.is_seller && (
-            <Text style={[styles.title, { color: theme.colors.color }]}>Seller Content</Text>
-          )}
+            <React.Fragment>
+              {/* Business Section */}
+              <Text style={[styles.title, { color: theme.colors.color }]}>Business: Seller</Text>
 
+              <List.Section>
+
+                {/* Paypal */}
+                <List.Item
+                  style={[styles.listItem, { backgroundColor: theme.colors.cardsdialogs }]}
+                  titleStyle={{ color: theme.colors.color, fontWeight: 'bold' }}
+                  descriptionStyle={{ color: theme.colors.color }}
+                  description={sellerInfo?.paypal_email}
+                  title="Paypal's Email Address"
+                  left={() => <List.Icon icon="email" color={theme.colors.color} />}
+                />
+
+                {/* Address */}
+                <List.Item
+                  style={[styles.listItem, { backgroundColor: theme.colors.cardsdialogs }]}
+                  titleStyle={{ color: theme.colors.color, fontWeight: 'bold' }}
+                  descriptionStyle={{ color: theme.colors.color }}
+                  description={sellerInfo?.address}
+                  title="Address"
+                  left={() => <List.Icon icon="map-marker" color={theme.colors.color} />}
+                />
+
+                {/* Phone Number */}
+                <List.Item
+                  style={[styles.listItem, { backgroundColor: theme.colors.cardsdialogs }]}
+                  titleStyle={{ color: theme.colors.color, fontWeight: 'bold' }}
+                  descriptionStyle={{ color: theme.colors.color }}
+                  description={sellerInfo?.phone_number}
+                  title="Phone Number"
+                  left={() => <List.Icon icon="phone" color={theme.colors.color} />}
+                />
+
+                {/* About */}
+                <List.Item
+                  style={[styles.listItem, { backgroundColor: theme.colors.cardsdialogs }]}
+                  titleStyle={{ color: theme.colors.color, fontWeight: 'bold' }}
+                  descriptionStyle={{ color: theme.colors.color }}
+                  description={sellerInfo?.about}
+                  title="About"
+                  left={() => <List.Icon icon="information" color={theme.colors.color} />}
+                />
+
+              </List.Section>
+            </React.Fragment>
+          )}
         </View>
 
         <View style={{ marginBottom: 300 }}></View>

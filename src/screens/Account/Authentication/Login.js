@@ -203,7 +203,7 @@ export default function LoginPage() {
                       />
                     }
                   />
-                  <Button mode="text" style={{alignSelf:'flex-end'}} >Forgot password?</Button>
+                  <Button mode="text" style={{alignSelf:'flex-end'}} onPress={()=>navigation.navigate("forgot_password")} >Forgot password?</Button>
                   {/* Password validation error */}
                   {formSubmitted && password.trim() === '' && (
                     <HelperText type="error" visible={password.trim() === ''} style={{ marginLeft: 10, marginTop: -8 }}>

@@ -15,7 +15,7 @@ const Stack = createNativeStackNavigator();
 
 const AuthStack = () => {
   return (
-    <Stack.Navigator initialRouteName="create_account" screenOptions={{ headerShown: false }}>
+    <Stack.Navigator initialRouteName="entrance" screenOptions={{ headerShown: false }}>
       {/* Entrance Page */}
       <Stack.Screen name="entrance" component={EntrancePage} />
 

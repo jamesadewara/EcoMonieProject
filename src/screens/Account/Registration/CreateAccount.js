@@ -34,7 +34,7 @@ import * as ImageManipulator from 'expo-image-manipulator';
 
 const CreateAccountPage = ({ route }) => {
   const navigation = useNavigation();
-  const email = 'jamesadewara3@gmail.com'//route.params?.email;
+  const email = route.params?.email;
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -140,13 +140,14 @@ const CreateAccountPage = ({ route }) => {
     setIsLoading(true);
     setAlertMessage('Signing you up...');
     try {
-      const response = await signup(formData);
+      const response = await signup({ formData });
       if (response.error && response.error.status === 400) {
         navigation.navigate('login');
       } else {
         // Log the user in
         loginUser();
       }
+      console.log(response)
     } catch (error) {
       setDialogTitle('Signup Failed');
       setDialogMessage('An error occurred while signing up. Please try again.');
@@ -194,7 +195,7 @@ const CreateAccountPage = ({ route }) => {
     }
 
     if (firstName.trim() === '' || lastName.trim() === '') {
-Alert.alert('Invalid Name', 'Please enter your first and last name.');
+      Alert.alert('Invalid Name', 'Please enter your first and last name.');
       return;
     }
 
@@ -246,8 +247,8 @@ Alert.alert('Invalid Name', 'Please enter your first and last name.');
                 label="Password"
                 mode="outlined"
                 placeholder="Enter Password"
-                outlineColor={MD2Colors.green500}
-                selectionColor={MD2Colors.green700}
+                outlineColor={theme.colors.green500}
+                selectionColor={theme.colors.green700}
                 textColor={theme.colors.color}
                 style={[Styles.mb2]}
                 secureTextEntry={!isPasswordVisible}

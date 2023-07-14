@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Image } from 'react-native';
-import { Button, Dialog, Paragraph, Modal } from 'react-native-paper';
+import { Button, Dialog, Paragraph } from 'react-native-paper';
 
 // Get All Images for the Screen
 const Thumbnail = {
@@ -16,7 +16,7 @@ const ImageDialog = ({ visible, onDismiss, backgroundColor, color, title, messag
       return Thumbnail.email_logo;
     } else if (status === 'error') {
       return Thumbnail.error_logo;
-    } else if (status === 'nointernet') {
+    } else if (status === 'success') {
       return Thumbnail.success_logo;
     } else if (status === 'nointernet') {
       return Thumbnail.nointernet_logo;
@@ -25,11 +25,11 @@ const ImageDialog = ({ visible, onDismiss, backgroundColor, color, title, messag
   };
 
   return (
-    <Dialog visible={visible} onDismiss={onDismiss} style={{ backgroundColor }}>
+    <Dialog visible={visible} onDismiss={onDismiss} style={{ backgroundColor, borderRadius: 5, borderColor: color, borderWidth: 2 }}>
       <Dialog.Title style={{ color, textAlign: 'center' }}>{title}</Dialog.Title>
       <Dialog.Content>
         <View style={{ alignItems: 'center' }}>
-          <Image source={getImageSource()} style={{ width: 100, height: 100 }} />
+          {status && <Image source={getImageSource()} style={{ width: 100, height: 100 }} />}
         </View>
         <Paragraph style={{ color, textAlign: 'center' }}>{message}</Paragraph>
       </Dialog.Content>

@@ -5,7 +5,7 @@ import { Snackbar, DefaultTheme, DarkTheme, Provider as PaperProvider } from "re
 import NetInfo from "@react-native-community/netinfo";
 import { useSelector, useDispatch } from "react-redux";
 import { retrieveTokenFromSecureStore, setToken, selectCurrentToken } from "./app/actions/authSlice";
-import { selectCurrentTheme } from "./app/actions/themeSlice";
+import { setTheme, selectCurrentTheme } from "./app/actions/themeSlice";
 import * as Font from 'expo-font';
 
 // Import Navigation stacks
@@ -17,22 +17,22 @@ const ScreenManager = () => {
   // Using Redux selectors to access state values
   const launch = useSelector((state) => state.launch.intro);
   const accessToken = useSelector(selectCurrentToken);
-  const isDarkMode = useSelector(selectCurrentTheme);
+  const currentTheme = useSelector(selectCurrentTheme);
 
   // State variables
   const [isConnected, setIsConnected] = useState(true);
   const [snackbarVisible, setSnackbarVisible] = useState(false);
 
   const dispatch = useDispatch();
+ 
 
   useEffect(() => {
     retrieveTokenFromSecureStore()
       .then((token) => {
-        if (token){
-          console.log(token)
+        if (token) {
+         
           dispatch(setToken(token));
         }
- 
       })
       .catch((error) => {
         console.error("Error retrieving token:", error);
@@ -71,20 +71,58 @@ const ScreenManager = () => {
     colors: {
       ...DefaultTheme.colors,
       primary: 'green',
-      background: isDarkMode ? '#121212' : '#eeeeee',
-      appbar: isDarkMode ? '#1f1f1f' : '#F5F5F5',
-      cardsdialogs: isDarkMode ? '#1a1a1a' : '#FAFAFA',
-      flatbuttondown: isDarkMode ? '#999999' : '#cccccc',
-      color: isDarkMode ? '#ffffff' : '#1a1a1a',
-      mode: isDarkMode ? 'dark' : 'light',
-      status: isDarkMode ? 'light-content' : 'dark-content',
+      lightprimary: '#81c784',
+      darkprimary: '#198754',
+      shadeprimary1: '#087f4d',
+      shadeprimary2: '#b0d9a2',
+      background: '',
+      appbar: '',
+      cardsdialogs: '',
+      flatbuttondown: '',
+      color: '',
+      fade: "#aaa",
+      mode: '',
+      status: '',
       disabled: {
-        primary: isDarkMode ? '#5a5a5a' : '#777777',
+        primary: '',
         // Add more disabled colors as needed
       },
     },
-    ...isDarkMode ? DarkTheme : {},
   };
+
+  switch (currentTheme) {
+    case 'gold':
+      theme.colors.background = '#ffd700';
+      theme.colors.appbar = '#f0c400';
+      theme.colors.cardsdialogs = '#ffe300';
+      theme.colors.flatbuttondown = '#d4b106';
+      theme.colors.color = '#1a1a1a';
+      theme.colors.mode = 'light';
+      theme.colors.status = 'dark-content';
+      theme.colors.disabled.primary = '#777777';
+      break;
+    case 'dark':
+      theme.colors.background = '#121212';
+      theme.colors.appbar = '#1f1f1f';
+      theme.colors.cardsdialogs = '#1A1A1A';
+      theme.colors.flatbuttondown = '#999999';
+      theme.colors.color = '#ffffff';
+      theme.colors.mode = 'dark';
+      theme.colors.status = 'light-content';
+      theme.colors.disabled.primary = '#5a5a5a';
+      break;
+    case 'light':
+    default:
+      theme.colors.background = '#eeeeee';
+      theme.colors.appbar = '#F5F5F5';
+      theme.colors.cardsdialogs = '#FAFAFA';
+      theme.colors.flatbuttondown = '#cccccc';
+      theme.colors.color = '#1a1a1a';
+      theme.colors.mode = 'light';
+      theme.colors.status = 'dark-content';
+      theme.colors.disabled.primary = '#777777';
+      break;
+  }
 
   return (
     <PaperProvider theme={theme}>
@@ -96,7 +134,7 @@ const ScreenManager = () => {
 
       {/* Snackbar to display when there is no internet connection */}
       <Snackbar visible={!isConnected} onDismiss={() => setSnackbarVisible(false)}>
-        No internet connection
+      No internet connection. Please check your network settings.
       </Snackbar>
     </PaperProvider>
   );
